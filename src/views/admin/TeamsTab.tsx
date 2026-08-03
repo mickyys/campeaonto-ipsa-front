@@ -1,0 +1,233 @@
+'use client'
+
+import { useState } from 'react'
+import { useTeams } from '@/lib/hooks'
+import type { Player, PlayerPos, Team } from '@/lib/types'
+import { useSave, useDelete } from './crud'
+import { AdminButton, ErrorNote, Field, SuccessNote, inputStyle, NAVY } from './ui'
+
+const POS: PlayerPos[] = ['Portero', 'Defensa', 'Mediocampista', 'Delantero']
+
+const emptyPlayer = (): Player => ({
+  id: typeof crypto !== 'undefined' ? crypto.randomUUID() : `p${Date.now()}`,
+  num: 1,
+  name: '',
+  pos: 'Delantero',
+})
+
+const emptyTeam = (): Team => ({ id: '', name: '', color: NAVY, players: [] })
+
+export default function TeamsTab() {
+  const { data: teams = [], refetch } = useTeams()
+  const save = useSave<Team>('/api/admin/teams', ['teams'])
+  const del = useDelete('/api/admin/teams', ['teams'])
+  const [editing, setEditing] = useState<Team | null>(null)
+  const [isNew, setIsNew] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [ok, setOk] = useState<string | null>(null)
+
+  const startNew = () => {
+    setEditing(emptyTeam())
+    setIsNew(true)
+    setError(null)
+    setOk(null)
+  }
+  const startEdit = (t: Team) => {
+    setEditing(JSON.parse(JSON.stringify(t)))
+    setIsNew(false)
+    setError(null)
+    setOk(null)
+  }
+  const cancel = () => {
+    setEditing(null)
+    setError(null)
+    setOk(null)
+  }
+
+  const update = (patch: Partial<Team>) => {
+    setEditing((e) => (e ? { ...e, ...patch } : e))
+  }
+
+  const updatePlayer = (idx: number, patch: Partial<Player>) => {
+    setEditing((e) => {
+      if (!e) return e
+      const players = e.players.map((p, i) => (i === idx ? { ...p, ...patch } : p))
+      return { ...e, players }
+    })
+  }
+
+  const addPlayer = () => {
+    setEditing((e) => (e ? { ...e, players: [...e.players, emptyPlayer()] } : e))
+  }
+
+  const removePlayer = (idx: number) => {
+    setEditing((e) => (e ? { ...e, players: e.players.filter((_, i) => i !== idx) } : e))
+  }
+
+  const submit = async () => {
+    if (!editing) return
+    setError(null)
+    setOk(null)
+    if (!editing.name.trim()) return setError('El nombre del equipo es obligatorio')
+    if (isNew && !editing.id.trim()) return setError('El id del equipo es obligatorio')
+    const invalid = editing.players.find((p) => !p.name.trim() || !p.num)
+    if (invalid) return setError('Cada jugador debe tener nombre y número')
+    try {
+      await save.mutateAsync(editing)
+      setOk(isNew ? 'Equipo creado' : 'Equipo actualizado')
+      setEditing(null)
+      refetch()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar')
+    }
+  }
+
+  const handleDelete = async (t: Team) => {
+    if (!confirm(`¿Eliminar el equipo "${t.name}"?`)) return
+    setError(null)
+    setOk(null)
+    try {
+      await del.mutateAsync(t.id)
+      setOk('Equipo eliminado')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo eliminar')
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ fontSize: 12, color: '#64748b' }}>{teams.length} equipos registrados</div>
+        <AdminButton onClick={startNew}>+ Nuevo equipo</AdminButton>
+      </div>
+
+      {error && <ErrorNote msg={error} />}
+      {ok && <SuccessNote msg={ok} />}
+
+      {editing && (
+        <div className="card" style={{ padding: 18 }}>
+          <h4 style={{ margin: '0 0 14px', fontSize: 14, color: '#0f172a' }}>
+            {isNew ? 'Nuevo equipo' : `Editar: ${editing.name}`}
+          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 12, marginBottom: 16 }}>
+            <Field label="ID">
+              <input
+                style={inputStyle}
+                value={editing.id}
+                disabled={!isNew}
+                onChange={(e) => update({ id: e.target.value.trim() })}
+                placeholder="ej: kA"
+              />
+            </Field>
+            <Field label="Nombre">
+              <input style={inputStyle} value={editing.name} onChange={(e) => update({ name: e.target.value })} placeholder="ej: Kinder A" />
+            </Field>
+            <Field label="Color">
+              <input
+                style={{ ...inputStyle, padding: 4 }}
+                type="color"
+                value={editing.color}
+                onChange={(e) => update({ color: e.target.value })}
+              />
+            </Field>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Jugadores ({editing.players.length})</span>
+            <AdminButton small tone="ghost" onClick={addPlayer}>
+              + Agregar jugador
+            </AdminButton>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {editing.players.map((p, i) => (
+              <div key={p.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                <div style={{ width: 80 }}>
+                  <Field label="N°">
+                    <input
+                      style={inputStyle}
+                      type="number"
+                      min={0}
+                      value={p.num}
+                      onChange={(e) => updatePlayer(i, { num: Number(e.target.value) })}
+                    />
+                  </Field>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Field label="Nombre">
+                    <input style={inputStyle} value={p.name} onChange={(e) => updatePlayer(i, { name: e.target.value })} />
+                  </Field>
+                </div>
+                <div style={{ width: 160 }}>
+                  <Field label="Posición">
+                    <select
+                      style={inputStyle}
+                      value={p.pos}
+                      onChange={(e) => updatePlayer(i, { pos: e.target.value as PlayerPos })}
+                    >
+                      {POS.map((pos) => (
+                        <option key={pos} value={pos}>
+                          {pos}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+                <button
+                  onClick={() => removePlayer(i)}
+                  style={{
+                    border: 'none',
+                    background: 'none',
+                    color: '#dc2626',
+                    fontSize: 18,
+                    cursor: 'pointer',
+                    padding: '6px 4px',
+                    marginBottom: 2,
+                  }}
+                  title="Quitar jugador"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {editing.players.length === 0 && (
+              <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>Sin jugadores. Agrega al menos uno.</p>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            <AdminButton onClick={submit} disabled={save.isPending}>
+              {save.isPending ? 'Guardando…' : 'Guardar'}
+            </AdminButton>
+            <AdminButton tone="ghost" onClick={cancel}>
+              Cancelar
+            </AdminButton>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {teams.map((t) => (
+          <div
+            key={t.id}
+            className="card"
+            style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}
+          >
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{t.name}</div>
+              <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{t.players.length} jugadores · id: {t.id}</div>
+            </div>
+            <AdminButton small tone="ghost" onClick={() => startEdit(t)}>
+              Editar
+            </AdminButton>
+            <AdminButton small tone="danger" onClick={() => handleDelete(t)}>
+              Eliminar
+            </AdminButton>
+          </div>
+        ))}
+        {teams.length === 0 && <p style={{ fontSize: 13, color: '#94a3b8' }}>No hay equipos.</p>}
+      </div>
+    </div>
+  )
+}
