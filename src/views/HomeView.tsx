@@ -49,8 +49,8 @@ export default function HomeView() {
     const p = (n: number) => String(n).padStart(2, '0')
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
   }, [])
-  const nextFecha = upcoming[0]?.date
-  const nextFechaMatches = nextFecha && nextFecha >= today ? upcoming.filter((m) => m.date === nextFecha) : []
+  const nextFecha = upcoming.find((m) => m.date >= today)?.date
+  const nextFechaMatches = nextFecha ? upcoming.filter((m) => m.date === nextFecha) : []
 
   const stats = useMemo(
     () => [

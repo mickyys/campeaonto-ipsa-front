@@ -113,13 +113,15 @@ export function teamColor(map: Map<string, string>, name: string) {
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-export function formatDate(iso: string) {
+export function formatDate(iso?: string) {
+  if (!iso) return ''
   const [y, m, d] = iso.split('-').map(Number)
   if (!y || !m || !d) return iso
   return `${d} ${MONTHS[m - 1] ?? ''} ${y}`
 }
 
-export function formatDateLong(iso: string) {
+export function formatDateLong(iso?: string) {
+  if (!iso) return ''
   const [y, m, d] = iso.split('-').map(Number)
   if (!y || !m || !d) return iso
   const names = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
