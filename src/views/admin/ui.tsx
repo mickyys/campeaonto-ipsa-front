@@ -26,10 +26,13 @@ export const labelStyle: CSSProperties = {
   marginBottom: 4,
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label style={labelStyle}>
+        {label}
+        {hint && <span style={{ color: '#94a3b8', fontWeight: 400 }}> ({hint})</span>}
+      </label>
       {children}
     </div>
   )

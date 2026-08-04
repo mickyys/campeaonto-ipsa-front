@@ -1,10 +1,9 @@
-export type PlayerPos = 'Portero' | 'Defensa' | 'Mediocampista' | 'Delantero'
-
 export interface Player {
   id: string
   num: number
   name: string
-  pos: PlayerPos
+  guardianType?: string
+  studentName?: string
 }
 
 export interface Team {
@@ -28,9 +27,15 @@ export interface Match {
   time: string
   group: string
   cancha: string
+  referee?: string
   homeScore?: number
   awayScore?: number
   status: 'upcoming' | 'completed'
+}
+
+export interface FreeTeams {
+  id: string
+  byGroup: Record<string, string[]>
 }
 
 export interface BracketMatch {
@@ -43,14 +48,22 @@ export interface BracketMatch {
   winner?: string
 }
 
-export type Bracket = BracketMatch[][]
+export interface BracketRound {
+  name?: string
+  matches: BracketMatch[]
+}
+
+export type Bracket = BracketRound[]
+
+export type BracketCopaId = 'oro' | 'plata' | 'bronce'
+
+export type CopaBrackets = Record<BracketCopaId, Bracket>
 
 export interface Scorer {
   id: string
   name: string
   team: string
   goals: number
-  assists: number
 }
 
 export interface Settings {

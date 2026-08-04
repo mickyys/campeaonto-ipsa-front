@@ -19,6 +19,8 @@ export default function MatchCard({
   const draw = done && m.homeScore === m.awayScore
   const hc = teamColor(colors, m.homeTeam)
   const ac = teamColor(colors, m.awayTeam)
+  const homeTurno = m.referee === m.homeTeam
+  const awayTurno = m.referee === m.awayTeam
 
   return (
     <div
@@ -47,6 +49,12 @@ export default function MatchCard({
       >
         <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
           {formatDate(m.date)} · {m.time}
+          {m.referee ? (
+            <>
+              {' · '}
+              <span style={{ color: '#b45309', fontWeight: 700 }}>Turno: {m.referee}</span>
+            </>
+          ) : null}
         </span>
         <GroupBadge group={m.group} />
       </div>
@@ -76,6 +84,22 @@ export default function MatchCard({
         >
           {m.homeTeam}
         </span>
+        {homeTurno && (
+          <span
+            style={{
+              fontSize: 8.5,
+              fontWeight: 800,
+              background: '#fef3c7',
+              color: '#b45309',
+              borderRadius: 4,
+              padding: '1px 5px',
+              letterSpacing: '.05em',
+              flexShrink: 0,
+            }}
+          >
+            TURNO
+          </span>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
           {done ? (
             <>
@@ -127,6 +151,22 @@ export default function MatchCard({
         >
           {m.awayTeam}
         </span>
+        {awayTurno && (
+          <span
+            style={{
+              fontSize: 8.5,
+              fontWeight: 800,
+              background: '#fef3c7',
+              color: '#b45309',
+              borderRadius: 4,
+              padding: '1px 5px',
+              letterSpacing: '.05em',
+              flexShrink: 0,
+            }}
+          >
+            TURNO
+          </span>
+        )}
         <span
           style={{
             width: 8,

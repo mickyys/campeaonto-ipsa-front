@@ -1,11 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import html2canvas from 'html2canvas'
-import { useMatches, useSettings, useTeams } from '@/lib/hooks'
+import { useFreeTeams, useGroups, useMatches, useSettings, useTeams } from '@/lib/hooks'
 import type { Match, Team } from '@/lib/types'
-import { AdminButton, Field, inputStyle } from './ui'
+import { api } from '@/lib/api'
+import { AdminButton, ErrorNote, SuccessNote, Field, inputStyle } from './ui'
 
 const MATCH_DURATION = 50
 
@@ -36,6 +37,8 @@ function FixtureCard({
   teams,
   orgName,
   contactEmail,
+  turnoByGroup,
+  freeByGroup,
   feedRef,
 }: {
   matches: Match[]
@@ -43,11 +46,17 @@ function FixtureCard({
   teams: Team[]
   orgName: string
   contactEmail: string
+  turnoByGroup: Record<string, string>
+  freeByGroup: Record<string, string[]>
   feedRef: React.RefObject<HTMLDivElement | null>
 }) {
   const colorMap = new Map<string, string>()
   for (const t of teams) colorMap.set(t.name, t.color)
   const getColor = (name: string) => colorMap.get(name) ?? MUTED
+  const idToName = new Map<string, string>()
+  for (const t of teams) idToName.set(t.id, t.name)
+
+  const freeGroups = Object.entries(freeByGroup).filter(([, ids]) => ids.length > 0)
 
   return (
     <div
@@ -81,7 +90,7 @@ function FixtureCard({
           <br />
           APODERADOS
         </div>
-        <div style={{ fontWeight: 800, fontSize: 18, color: GOLD, letterSpacing: '.1em', marginTop: 6 }}>IPSA 2025</div>
+        <div style={{ fontWeight: 800, fontSize: 18, color: GOLD, letterSpacing: '.1em', marginTop: 6 }}>IPSA 2026</div>
       </div>
 
       <div style={{ background: 'rgba(255,255,255,0.05)', borderBottom: `1px solid ${DIVIDER}`, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -96,6 +105,16 @@ function FixtureCard({
         </span>
       </div>
 
+      {freeGroups.length > 0 && (
+        <div style={{ padding: '6px 20px', background: 'rgba(245,200,66,0.06)', borderBottom: `1px solid ${DIVIDER}` }}>
+          {freeGroups.map(([g, ids]) => (
+            <div key={g} style={{ fontSize: 10, color: GOLD, lineHeight: 1.5 }}>
+              <b>LIBRES {g}:</b> {ids.map((id) => idToName.get(id) ?? id).join(' · ')}
+            </div>
+          ))}
+        </div>
+      )}
+
       <div>
         {matches.map((m, i) => {
           const endTime = addMins(m.time, MATCH_DURATION)
@@ -103,6 +122,7 @@ function FixtureCard({
           const ac = getColor(m.awayTeam)
           const hw = m.status === 'completed' && (m.homeScore ?? 0) > (m.awayScore ?? 0)
           const aw = m.status === 'completed' && (m.awayScore ?? 0) > (m.homeScore ?? 0)
+          const turno = turnoByGroup[m.group] ?? m.referee ?? 'Por definir'
           return (
             <div
               key={m.id}
@@ -143,7 +163,7 @@ function FixtureCard({
 
                 <div
                   style={{
-                    width: 66,
+                    width: 104,
                     flexShrink: 0,
                     display: 'flex',
                     flexDirection: 'column',
@@ -151,7 +171,7 @@ function FixtureCard({
                     justifyContent: 'center',
                     padding: '10px 6px',
                     borderLeft: `1px solid ${DIVIDER}`,
-                    gap: 4,
+                    gap: 3,
                   }}
                 >
                   {m.status === 'completed' ? (
@@ -163,10 +183,10 @@ function FixtureCard({
                     </>
                   ) : (
                     <>
-                      <span style={{ fontSize: 9, color: MUTED, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.3 }}>
-                        Cancha
+                      <span style={{ fontSize: 8.5, color: MUTED, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>
+                        Turno
                       </span>
-                      <span style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{m.cancha}</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1.15, textAlign: 'center' }}>{turno}</span>
                       <span style={{ fontSize: 9, color: MUTED, fontWeight: 600, letterSpacing: '.04em' }}>G{m.group}</span>
                     </>
                   )}
@@ -190,22 +210,97 @@ export default function ShareTab() {
   const [selDate, setSelDate] = useState<string>('')
   const [genStatus, setGenStatus] = useState<'idle' | 'generating' | 'done'>('idle')
   const [imgUrl, setImgUrl] = useState<string | null>(null)
-  const { data: matches = [] } = useMatches()
+  const [error, setError] = useState<string | null>(null)
+  const [ok, setOk] = useState<string | null>(null)
+  const [turnoByGroup, setTurnoByGroup] = useState<Record<string, string>>({})
+  const [freeByGroup, setFreeByGroup] = useState<Record<string, string[]>>({})
+
+  const { data: matches = [], refetch: refetchMatches } = useMatches()
   const { data: teams = [] } = useTeams()
+  const { data: groups = [] } = useGroups()
+  const { data: freeTeams = [], refetch: refetchFree } = useFreeTeams()
   const { data: settings } = useSettings()
   const orgName = settings?.orgName ?? 'CENTRO DE PADRES IPSA SAI'
   const contactEmail = settings?.contactEmail ?? 'centrodepadresipsasai@gmail.com'
 
-  const dates = [...new Set(matches.map((m) => m.date))].sort()
+  const dates = [...new Set(matches.map((m) => m.date))].sort((a, b) => b.localeCompare(a))
   const effectiveDate = selDate || dates[0] || ''
   const dayMatches = effectiveDate
-    ? matches.filter((m) => m.date === effectiveDate).sort((a, b) => a.time.localeCompare(b.time))
+    ? matches
+        .filter((m) => m.date === effectiveDate)
+        .sort((a, b) => b.time.localeCompare(a.time))
     : []
+  const dayGroups = [...new Set(dayMatches.map((m) => m.group))].sort()
+  const teamNames = teams.map((t) => t.name)
+
+  useEffect(() => {
+    const duty: Record<string, string> = {}
+    const free: Record<string, string[]> = {}
+    for (const g of dayGroups) {
+      const first = dayMatches.find((m) => m.group === g)
+      duty[g] = first?.referee ?? ''
+      const ft = freeTeams.find((f) => f.id === effectiveDate)
+      free[g] = ft?.byGroup?.[g] ?? []
+    }
+    setTurnoByGroup(duty)
+    setFreeByGroup(free)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveDate, matches, freeTeams])
+
+  const groupTeams = (g: string): Team[] => {
+    const grp = groups.find((x) => x.label === g)
+    if (!grp) return []
+    return grp.teamIds
+      .map((id) => teams.find((t) => t.id === id))
+      .filter((t): t is Team => Boolean(t))
+  }
 
   const selectDate = (d: string) => {
     setSelDate(d)
     setGenStatus('idle')
     setImgUrl(null)
+    setError(null)
+    setOk(null)
+  }
+
+  const saveTurno = async (g: string, ref: string) => {
+    setError(null)
+    setOk(null)
+    const target = dayMatches.filter((m) => m.group === g)
+    if (target.length === 0) return
+    try {
+      for (const m of target) {
+        await api(`/api/admin/matches/${encodeURIComponent(m.id)}`, {
+          method: 'PUT',
+          body: JSON.stringify({ ...m, referee: ref || undefined }),
+        })
+      }
+      setTurnoByGroup((s) => ({ ...s, [g]: ref }))
+      refetchMatches()
+      setOk(`Equipo de turno del grupo ${g} actualizado`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar')
+    }
+  }
+
+  const toggleFree = async (g: string, teamId: string) => {
+    setError(null)
+    setOk(null)
+    const next = freeByGroup[g] ?? []
+    const updated = next.includes(teamId)
+      ? next.filter((id) => id !== teamId)
+      : [...next, teamId]
+    try {
+      await api(`/api/admin/free-teams/${encodeURIComponent(effectiveDate)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ id: effectiveDate, byGroup: { ...freeByGroup, [g]: updated } }),
+      })
+      setFreeByGroup((s) => ({ ...s, [g]: updated }))
+      refetchFree()
+      setOk(`Equipos libres del grupo ${g} actualizados`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar')
+    }
   }
 
   const generate = async () => {
@@ -213,7 +308,7 @@ export default function ShareTab() {
     setGenStatus('generating')
     setImgUrl(null)
     try {
-      const canvas = await html2canvas(cardRef.current, { scale: 2.5, useCORS: true, logging: false, backgroundColor: '#0d1c38' })
+      const canvas = await html2canvas(cardRef.current, { scale: 2.5, useCORS: true, logging: false, backgroundColor: BG })
       setImgUrl(canvas.toDataURL('image/png'))
       setGenStatus('done')
     } catch {
@@ -235,18 +330,18 @@ export default function ShareTab() {
       const blob = await (await fetch(imgUrl)).blob()
       const file = new File([blob], `fixture-ipsa-${effectiveDate}.png`, { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Fixture IPSA SAI 2025', text: `Fixture ${fmtDateShort(effectiveDate)}` })
+        await navigator.share({ files: [file], title: 'Fixture IPSA San Antonio 2026', text: `Fixture ${fmtDateShort(effectiveDate)}` })
         return
       }
     } catch {
       // fallback
     }
     const txt =
-      `⚽ *Campeonato Apoderados IPSA SAI 2025*\n📅 ${fmtDateShort(effectiveDate)}\n\n` +
+      `⚽ *Campeonato Apoderados IPSA San Antonio 2026*\n📅 ${fmtDateShort(effectiveDate)}\n\n` +
       dayMatches
         .map((m) =>
           `🕐 ${m.time}–${addMins(m.time, MATCH_DURATION)} | *${m.homeTeam}* vs *${m.awayTeam}*` +
-          (m.status === 'completed' ? ` — ${m.homeScore}–${m.awayScore}` : ` | Cancha ${m.cancha}`),
+          (m.status === 'completed' ? ` — ${m.homeScore}–${m.awayScore}` : ` | Turno: ${turnoByGroup[m.group] ?? m.referee ?? 'Por definir'}`),
         )
         .join('\n') +
       `\n\n_Organiza: ${orgName}_`
@@ -267,6 +362,9 @@ export default function ShareTab() {
             ))}
           </select>
         </Field>
+
+        {error && <ErrorNote msg={error} />}
+        {ok && <SuccessNote msg={ok} />}
 
         <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', padding: '12px 14px', margin: '14px 0 16px' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -291,10 +389,59 @@ export default function ShareTab() {
                 <span style={{ flex: 1, fontWeight: 500 }}>
                   {m.homeTeam} vs {m.awayTeam}
                 </span>
+                <span style={{ fontSize: 10, color: '#94a3b8', flexShrink: 0 }}>G{m.group}</span>
               </div>
             ))
           )}
         </div>
+
+        {dayGroups.map((g) => (
+          <div key={g} style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', padding: '12px 14px', margin: '0 0 14px' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#0f172a', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 10 }}>
+              Grupo {g}
+            </div>
+            <Field label="Equipo de turno">
+              <select style={inputStyle} value={turnoByGroup[g] ?? ''} onChange={(e) => saveTurno(g, e.target.value)}>
+                <option value="">Por definir</option>
+                {teamNames.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+                Equipos libres
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {groupTeams(g).map((t) => {
+                  const active = (freeByGroup[g] ?? []).includes(t.id)
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => toggleFree(g, t.id)}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: 8,
+                        border: '1.5px solid',
+                        borderColor: active ? '#1e3a8a' : '#e2e8f0',
+                        background: active ? '#eef2ff' : '#fff',
+                        color: active ? '#1e3a8a' : '#64748b',
+                        fontWeight: 600,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {t.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        ))}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <AdminButton onClick={generate} disabled={!dayMatches.length || genStatus === 'generating'}>
@@ -343,11 +490,11 @@ export default function ShareTab() {
         {genStatus === 'done' && imgUrl ? (
           <Image src={imgUrl} alt="Fixture" width={400} height={640} unoptimized style={{ width: '100%', maxWidth: 400, height: 'auto', borderRadius: 14, display: 'block', boxShadow: '0 8px 32px rgba(0,0,0,.15)' }} />
         ) : (
-          <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} feedRef={cardRef} />
+          <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} turnoByGroup={turnoByGroup} freeByGroup={freeByGroup} feedRef={cardRef} />
         )}
         {genStatus === 'done' && (
           <div style={{ position: 'fixed', left: '-9999px', top: 0, pointerEvents: 'none' }}>
-            <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} feedRef={cardRef} />
+            <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} turnoByGroup={turnoByGroup} freeByGroup={freeByGroup} feedRef={cardRef} />
           </div>
         )}
       </div>

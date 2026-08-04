@@ -39,7 +39,7 @@ export default function Footer() {
             style={{ objectFit: 'contain' }}
           />
           <span style={{ fontSize: 12, color: '#64748b' }}>
-            Centro de Padres IPSA SAI · Campeonato Apoderados 2025
+            Centro de Padres IPSA San Antonio · Campeonato Apoderados 2026
           </span>
         </div>
         <a

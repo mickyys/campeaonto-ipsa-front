@@ -11,7 +11,6 @@ const emptyScorer = (): Scorer => ({
   name: '',
   team: '',
   goals: 0,
-  assists: 0,
 })
 
 export default function ScorersTab() {
@@ -122,15 +121,6 @@ export default function ScorersTab() {
                 onChange={(e) => set({ goals: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Asistencias">
-              <input
-                style={inputStyle}
-                type="number"
-                min={0}
-                value={editing.assists}
-                onChange={(e) => set({ assists: Number(e.target.value) })}
-              />
-            </Field>
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <AdminButton onClick={submit} disabled={save.isPending}>
@@ -167,12 +157,12 @@ export default function ScorersTab() {
               <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{s.name}</div>
               <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{s.team}</div>
             </div>
-            <div style={{ textAlign: 'right', marginRight: 8 }}>
-              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 20, color: '#0f172a', lineHeight: 1 }}>
-                {s.goals}
+              <div style={{ textAlign: 'right', marginRight: 8 }}>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 20, color: '#0f172a', lineHeight: 1 }}>
+                  {s.goals}
+                </div>
+                <div style={{ fontSize: 10, color: '#94a3b8' }}>goles</div>
               </div>
-              <div style={{ fontSize: 10, color: '#94a3b8' }}>{s.assists} ast</div>
-            </div>
             <AdminButton small tone="ghost" onClick={() => startEdit(s)}>
               Editar
             </AdminButton>

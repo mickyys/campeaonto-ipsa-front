@@ -1,18 +1,27 @@
 'use client'
 
 import { useState } from 'react'
+import * as XLSX from 'xlsx'
 import { useTeams } from '@/lib/hooks'
-import type { Player, PlayerPos, Team } from '@/lib/types'
+import type { Player, Team } from '@/lib/types'
 import { useSave, useDelete } from './crud'
 import { AdminButton, ErrorNote, Field, SuccessNote, inputStyle, NAVY } from './ui'
 
-const POS: PlayerPos[] = ['Portero', 'Defensa', 'Mediocampista', 'Delantero']
+const GUARDIAN_TYPES = ['Padre', 'Padrastro', 'Otro']
+
+const norm = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
 
 const emptyPlayer = (): Player => ({
   id: typeof crypto !== 'undefined' ? crypto.randomUUID() : `p${Date.now()}`,
   num: 1,
   name: '',
-  pos: 'Delantero',
+  guardianType: 'Padre',
+  studentName: '',
 })
 
 const emptyTeam = (): Team => ({ id: '', name: '', color: NAVY, players: [] })
@@ -62,6 +71,50 @@ export default function TeamsTab() {
 
   const removePlayer = (idx: number) => {
     setEditing((e) => (e ? { ...e, players: e.players.filter((_, i) => i !== idx) } : e))
+  }
+
+  const handleImport = async (file: File) => {
+    if (!editing || isNew) return
+    setError(null)
+    setOk(null)
+    try {
+      const buf = await file.arrayBuffer()
+      const wb = XLSX.read(buf)
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      if (!ws) return setError('El archivo no contiene hojas de datos')
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+      if (rows.length === 0) return setError('El archivo no tiene filas de datos')
+      const headers = Object.keys(rows[0])
+      const find = (...names: string[]) =>
+        headers.find((h) => names.map(norm).includes(norm(h)))
+      const colNum = find('n°', 'nro', 'numero', 'n', '#')
+      const colName = find('nombre', 'jugador')
+      const colApod = find('apoderado')
+      const colAlumno = find('alumno', 'estudiante')
+      if (!colName) return setError('No se encontró la columna "Nombre"')
+      const additions: Player[] = rows
+        .filter((r) => String(r[colName]).trim())
+        .map((r) => ({
+          id: typeof crypto !== 'undefined' ? crypto.randomUUID() : `p${Date.now()}-${Math.random()}`,
+          num: colNum ? Number(r[colNum]) || 0 : 0,
+          name: String(r[colName]).trim(),
+          guardianType: colApod ? String(r[colApod]).trim() : '',
+          studentName: colAlumno ? String(r[colAlumno]).trim() : '',
+        }))
+      setEditing((e) => {
+        if (!e) return e
+        const players = [...e.players]
+        for (const a of additions) {
+          const idx = players.findIndex((p) => p.num === a.num)
+          if (idx >= 0) players[idx] = { ...players[idx], ...a, id: players[idx].id }
+          else players.push(a)
+        }
+        return { ...e, players }
+      })
+      setOk(`${additions.length} jugadores importados desde Excel`)
+    } catch {
+      setError('No se pudo leer el archivo. Usa .xlsx, .xls o .csv')
+    }
   }
 
   const submit = async () => {
@@ -139,6 +192,26 @@ export default function TeamsTab() {
             </AdminButton>
           </div>
 
+          {!isNew && (
+            <div style={{ marginBottom: 12, padding: '10px 12px', border: '1px dashed #cbd5e1', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: '#64748b' }}>
+                Importar nómina (mergea con los jugadores existentes por N°)
+              </span>
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                style={{ fontSize: 12, maxWidth: 260 }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    handleImport(f)
+                    e.target.value = ''
+                  }
+                }}
+              />
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {editing.players.map((p, i) => (
               <div key={p.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
@@ -158,19 +231,29 @@ export default function TeamsTab() {
                     <input style={inputStyle} value={p.name} onChange={(e) => updatePlayer(i, { name: e.target.value })} />
                   </Field>
                 </div>
-                <div style={{ width: 160 }}>
-                  <Field label="Posición">
+                <div style={{ width: 170 }}>
+                  <Field label="Tipo de apoderado" hint="opcional">
                     <select
                       style={inputStyle}
-                      value={p.pos}
-                      onChange={(e) => updatePlayer(i, { pos: e.target.value as PlayerPos })}
+                      value={p.guardianType ?? ''}
+                      onChange={(e) => updatePlayer(i, { guardianType: e.target.value })}
                     >
-                      {POS.map((pos) => (
-                        <option key={pos} value={pos}>
-                          {pos}
+                      <option value="">—</option>
+                      {GUARDIAN_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
                         </option>
                       ))}
                     </select>
+                  </Field>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Field label="Nombre del alumno" hint="opcional">
+                    <input
+                      style={inputStyle}
+                      value={p.studentName ?? ''}
+                      onChange={(e) => updatePlayer(i, { studentName: e.target.value })}
+                    />
                   </Field>
                 </div>
                 <button

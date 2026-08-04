@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useBracket, hasBracketConfigured } from '@/lib/hooks'
 
 const LINKS = [
   { href: '/', label: 'Inicio' },
@@ -18,6 +19,9 @@ const AMBER = '#d97706'
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const { data: bracket } = useBracket()
+
+  const links = LINKS.filter((l) => l.href !== '/bracket' || hasBracketConfigured(bracket))
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -90,13 +94,13 @@ export default function Navbar() {
                 marginTop: 1,
               }}
             >
-              IPSA SAI 2025
+              IPSA San Antonio 2026
             </div>
           </div>
         </Link>
 
         <div className="hidden-mobile" style={{ gap: 2 }}>
-          {LINKS.map((l) => {
+          {links.map((l) => {
             const active = isActive(l.href)
             return (
               <Link
@@ -157,7 +161,7 @@ export default function Navbar() {
             padding: '6px 16px 10px',
           }}
         >
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}

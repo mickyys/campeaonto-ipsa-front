@@ -3,7 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from './api'
 import type {
-  Bracket,
+  CopaBrackets,
+  FreeTeams,
   Group,
   Match,
   PublicUser,
@@ -40,6 +41,14 @@ export function useMatches() {
   })
 }
 
+export function useFreeTeams() {
+  return useQuery({
+    queryKey: ['free-teams'],
+    queryFn: () => api<FreeTeams[]>('/api/free-teams'),
+    staleTime: STALE,
+  })
+}
+
 export function useStandings() {
   return useQuery({
     queryKey: ['standings'],
@@ -59,9 +68,18 @@ export function useScorers() {
 export function useBracket() {
   return useQuery({
     queryKey: ['bracket'],
-    queryFn: () => api<Bracket>('/api/bracket'),
+    queryFn: () => api<CopaBrackets>('/api/bracket'),
     staleTime: STALE,
   })
+}
+
+export const EMPTY_COPAS: CopaBrackets = { oro: [], plata: [], bronce: [] }
+
+export function hasBracketConfigured(copas?: CopaBrackets | null): boolean {
+  if (!copas) return false
+  return Object.values(copas).some((bracket) =>
+    bracket.some((round) => round.matches.some((m) => m.home || m.away)),
+  )
 }
 
 export function useSettings() {

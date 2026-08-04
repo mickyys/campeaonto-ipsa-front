@@ -2,12 +2,18 @@
 
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useBracket, useTeams } from '@/lib/hooks'
+import { useBracket, useTeams, EMPTY_COPAS } from '@/lib/hooks'
 import { api } from '@/lib/api'
-import type { Bracket, BracketMatch } from '@/lib/types'
+import type { Bracket, BracketCopaId, BracketMatch, BracketRound, CopaBrackets } from '@/lib/types'
 import { AdminButton, ErrorNote, SuccessNote, Field, inputStyle } from './ui'
 
 const ROUND_LABELS = ['Cuartos de Final', 'Semifinales', 'Final']
+
+const COPAS: { id: BracketCopaId; label: string; color: string }[] = [
+  { id: 'oro', label: 'Copa de Oro', color: '#d97706' },
+  { id: 'plata', label: 'Copa de Plata', color: '#64748b' },
+  { id: 'bronce', label: 'Copa de Bronce', color: '#b45309' },
+]
 
 const emptyBm = (): BracketMatch => ({
   id: typeof crypto !== 'undefined' ? crypto.randomUUID() : `b${Date.now()}`,
@@ -18,69 +24,83 @@ const emptyBm = (): BracketMatch => ({
 
 export default function BracketTab() {
   const qc = useQueryClient()
-  const { data: bracket = [], refetch } = useBracket()
+  const { data: copas = EMPTY_COPAS, refetch } = useBracket()
   const { data: teams = [] } = useTeams()
-  const [draft, setDraft] = useState<Bracket | null>(null)
+  const [draft, setDraft] = useState<CopaBrackets | null>(null)
+  const [active, setActive] = useState<BracketCopaId>('oro')
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
   const save = useMutation({
-    mutationFn: (rounds: Bracket) => api<Bracket>('/api/admin/bracket', { method: 'PUT', body: JSON.stringify({ rounds }) }),
+    mutationFn: (c: CopaBrackets) => api<CopaBrackets>('/api/admin/bracket', { method: 'PUT', body: JSON.stringify({ copas: c }) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bracket'] }),
   })
 
   const teamNames = teams.map((t) => t.name)
-  const editing = draft ?? bracket
+  const editing = draft ?? copas
+  const current: Bracket = editing[active] ?? []
 
   const begin = () => {
-    setDraft(JSON.parse(JSON.stringify(bracket)))
+    setDraft(JSON.parse(JSON.stringify(copas)))
     setError(null)
     setOk(null)
   }
 
-  const updateMatch = (ri: number, mi: number, patch: Partial<BracketMatch>) => {
+  const mutateRound = (fn: (rounds: Bracket) => Bracket) => {
     setDraft((d) => {
-      const base = d ?? bracket
-      return base.map((r, i) => {
-        if (i !== ri) return r
-        const matches = r.map((m, j) => {
-          if (j !== mi) return m
-          const next = { ...m, ...patch }
-          if (next.status === 'completed' && next.homeScore != null && next.awayScore != null) {
-            next.winner =
-              next.homeScore > next.awayScore
-                ? (next.home ?? undefined)
-                : next.awayScore > next.homeScore
-                  ? (next.away ?? undefined)
-                  : undefined
-          }
-          return next
-        })
-        return matches
-      })
+      const base = d ?? copas
+      return { ...base, [active]: fn(base[active] ?? []) }
     })
+  }
+
+  const updateMatch = (ri: number, mi: number, patch: Partial<BracketMatch>) => {
+    mutateRound((rounds) =>
+      rounds.map((r, i) => {
+        if (i !== ri) return r
+        return {
+          ...r,
+          matches: r.matches.map((m, j) => {
+            if (j !== mi) return m
+            const next = { ...m, ...patch }
+            if (next.status === 'completed' && next.homeScore != null && next.awayScore != null) {
+              next.winner =
+                next.homeScore > next.awayScore
+                  ? (next.home ?? undefined)
+                  : next.awayScore > next.homeScore
+                    ? (next.away ?? undefined)
+                    : undefined
+            }
+            return next
+          }),
+        }
+      }),
+    )
+  }
+
+  const updateRoundName = (ri: number, name: string) => {
+    mutateRound((rounds) => rounds.map((r, i) => (i === ri ? { ...r, name } : r)))
   }
 
   const addMatch = (ri: number) => {
-    setDraft((d) => {
-      const base = d ?? bracket
-      return base.map((r, i) => (i === ri ? [...r, emptyBm()] : r))
-    })
+    mutateRound((rounds) =>
+      rounds.map((r, i) => (i === ri ? { ...r, matches: [...r.matches, emptyBm()] } : r)),
+    )
   }
 
   const removeMatch = (ri: number, mi: number) => {
-    setDraft((d) => {
-      const base = d ?? bracket
-      return base.map((r, i) => (i === ri ? r.filter((_, j) => j !== mi) : r))
-    })
+    mutateRound((rounds) =>
+      rounds.map((r, i) =>
+        i === ri ? { ...r, matches: r.matches.filter((_, j) => j !== mi) } : r,
+      ),
+    )
   }
 
   const addRound = () => {
-    setDraft((d) => [...(d ?? bracket), [emptyBm()]])
+    mutateRound((rounds) => [...rounds, { name: '', matches: [emptyBm()] }])
   }
 
   const removeRound = (ri: number) => {
-    setDraft((d) => (d ?? bracket).filter((_, i) => i !== ri))
+    mutateRound((rounds) => rounds.filter((_, i) => i !== ri))
   }
 
   const submit = async () => {
@@ -100,7 +120,9 @@ export default function BracketTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ fontSize: 12, color: '#64748b' }}>El bracket se guarda completo en un solo paso.</div>
+        <div style={{ fontSize: 12, color: '#64748b' }}>
+          Las 3 copas se guardan completas en un solo paso.
+        </div>
         {!draft ? (
           <AdminButton onClick={begin}>Editar bracket</AdminButton>
         ) : (
@@ -121,14 +143,54 @@ export default function BracketTab() {
       {error && <ErrorNote msg={error} />}
       {ok && <SuccessNote msg={ok} />}
 
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {COPAS.map((c) => {
+          const configured = (editing[c.id] ?? []).some((r) => r.matches.some((m) => m.home || m.away))
+          return (
+            <button
+              key={c.id}
+              onClick={() => setActive(c.id)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: '1.5px solid',
+                borderColor: active === c.id ? c.color : '#e2e8f0',
+                background: active === c.id ? c.color : '#fff',
+                color: active === c.id ? '#fff' : '#334155',
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+                fontFamily: "'Barlow Condensed',sans-serif",
+                letterSpacing: '.03em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {c.label}
+              {configured ? ' ✓' : ''}
+            </button>
+          )
+        })}
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {editing.map((round, ri) => (
+        {current.map((round, ri) => (
           <div key={ri} className="card" style={{ padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <h4 style={{ margin: 0, fontSize: 14, color: '#0f172a' }}>
-                {ROUND_LABELS[ri] ?? `Ronda ${ri + 1}`}{' '}
-                <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>({round.length})</span>
-              </h4>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                {draft ? (
+                  <input
+                    style={{ ...inputStyle, width: 200, fontWeight: 700 }}
+                    placeholder="Nombre de la ronda, ej: 4 de final"
+                    value={round.name ?? ''}
+                    onChange={(e) => updateRoundName(ri, e.target.value)}
+                  />
+                ) : (
+                  <h4 style={{ margin: 0, fontSize: 14, color: '#0f172a' }}>
+                    {round.name || ROUND_LABELS[ri] || `Ronda ${ri + 1}`}
+                  </h4>
+                )}
+                <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>({round.matches.length})</span>
+              </div>
               {draft && (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <AdminButton small tone="ghost" onClick={() => addMatch(ri)}>
@@ -142,7 +204,7 @@ export default function BracketTab() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {round.map((m, mi) => {
+              {round.matches.map((m, mi) => {
                 const done = m.status === 'completed'
                 return (
                   <div key={m.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
@@ -229,13 +291,13 @@ export default function BracketTab() {
                   </div>
                 )
               })}
-              {round.length === 0 && <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>Ronda vacía.</p>}
+              {round.matches.length === 0 && <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>Ronda vacía.</p>}
             </div>
           </div>
         ))}
-        {editing.length === 0 && (
+        {current.length === 0 && (
           <p className="card" style={{ padding: 24, fontSize: 13, color: '#94a3b8', textAlign: 'center', margin: 0 }}>
-            Sin rondas. Haz clic en “Editar bracket” y agrega una.
+            Sin rondas en esta copa. Haz clic en “Editar bracket” y agrega una.
           </p>
         )}
       </div>

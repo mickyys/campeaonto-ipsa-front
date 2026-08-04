@@ -25,6 +25,10 @@ export default function GroupsView() {
   const sorted = [...(standings[tab] ?? [])].sort((a, b) => pts(b) - pts(a) || gd(b) - gd(a) || b.gf - a.gf)
 
   const selected = selectedTeam ? teams.find((t) => t.name === selectedTeam) : null
+  const openTeam = (team: string) => {
+    const t = teams.find((x) => x.name === team)
+    if (t && (t.players ?? []).length > 0) setSelectedTeam(team)
+  }
   const retry = () => {
     teamsQ.refetch()
     groupsQ.refetch()
@@ -67,7 +71,7 @@ export default function GroupsView() {
           <Image src="/ipsa-logo.png" alt="IPSA" width={36} height={36} style={{ objectFit: 'contain' }} />
           <div>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Tabla de Posiciones — Grupo {tab}</h3>
-            <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>Campeonato Apoderados IPSA SAI 2025 · Estadísticas actualizadas</p>
+            <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>Campeonato Apoderados IPSA San Antonio 2026 · Estadísticas actualizadas</p>
           </div>
           <div style={{ marginLeft: 'auto', background: NAVY, color: '#fff', borderRadius: 8, padding: '6px 14px', textAlign: 'center', flexShrink: 0 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', opacity: 0.75 }}>GRUPO</div>
@@ -114,7 +118,7 @@ export default function GroupsView() {
                   </td>
                   <td>
                     <div
-                      onClick={() => setSelectedTeam(s.team)}
+                      onClick={() => openTeam(s.team)}
                       style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}
                       onMouseEnter={(e) => {
                         const name = e.currentTarget.querySelector<HTMLElement>('[data-team-name]')
@@ -190,7 +194,7 @@ export default function GroupsView() {
               <div
                 key={team}
                 className="card card-hover"
-                onClick={() => setSelectedTeam(team)}
+                onClick={() => openTeam(team)}
                 style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
               >
                 <div

@@ -3,9 +3,9 @@ import './globals.css'
 import Providers from '@/components/Providers'
 
 export const metadata: Metadata = {
-  title: 'Campeonato de Apoderados IPSA SAI 2025',
+  title: 'Campeonato de Apoderados IPSA San Antonio 2026',
   description:
-    'Campeonato de Apoderados IPSA SAI 2025 · Instituto del Puerto. Fixture, tablas de posiciones, goleadores y eliminatorias.',
+    'Campeonato de Apoderados IPSA San Antonio 2026 · Instituto del Puerto. Fixture, tablas de posiciones, goleadores y eliminatorias.',
 }
 
 export default function RootLayout({

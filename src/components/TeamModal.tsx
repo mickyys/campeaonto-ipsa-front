@@ -1,22 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import type { Player, PlayerPos, Team } from '@/lib/types'
+import type { Player, Team } from '@/lib/types'
 import { teamColor } from '@/lib/hooks'
-
-const POS_ORDER: PlayerPos[] = ['Portero', 'Defensa', 'Mediocampista', 'Delantero']
-const POS_COLOR: Record<PlayerPos, string> = {
-  Portero: '#d97706',
-  Defensa: '#1e3a8a',
-  Mediocampista: '#0284c7',
-  Delantero: '#dc2626',
-}
-const POS_BG: Record<PlayerPos, string> = {
-  Portero: '#fef3c7',
-  Defensa: '#dbeafe',
-  Mediocampista: '#e0f2fe',
-  Delantero: '#fee2e2',
-}
 
 export default function TeamModal({
   team,
@@ -28,11 +14,9 @@ export default function TeamModal({
   onClose: () => void
 }) {
   const color = teamColor(colors, team.name)
-  const roster: Player[] = team.players ?? []
-  const grouped = POS_ORDER.reduce<Record<PlayerPos, Player[]>>((acc, p) => {
-    acc[p] = roster.filter((pl) => pl.pos === p).sort((a, b) => a.num - b.num)
-    return acc
-  }, { Portero: [], Defensa: [], Mediocampista: [], Delantero: [] })
+  const roster: Player[] = (team.players ?? [])
+    .slice()
+    .sort((a, b) => a.num - b.num)
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -144,64 +128,48 @@ export default function TeamModal({
         </div>
 
         <div style={{ overflowY: 'auto', padding: '14px 22px 20px' }}>
-          {POS_ORDER.filter((p) => grouped[p].length > 0).map((pos) => (
-            <div key={pos} style={{ marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {roster.map((pl) => (
+              <div
+                key={pl.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '9px 14px',
+                  borderRadius: 10,
+                  border: '1px solid #f1f5f9',
+                  background: '#fafbfc',
+                  transition: 'background .12s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f4ff')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#fafbfc')}
+              >
                 <span
                   style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '.06em',
-                    textTransform: 'uppercase',
-                    color: POS_COLOR[pos],
-                    background: POS_BG[pos],
-                    borderRadius: 5,
-                    padding: '2px 8px',
+                    fontFamily: "'Barlow Condensed',sans-serif",
+                    fontWeight: 800,
+                    fontSize: 18,
+                    color: `${color}`,
+                    width: 26,
+                    textAlign: 'center',
+                    lineHeight: 1,
+                    flexShrink: 0,
                   }}
                 >
-                  {pos}
+                  {pl.num}
                 </span>
-                <span style={{ fontSize: 11, color: '#cbd5e1' }}>{grouped[pos].length}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#334155' }}>{pl.name}</div>
+                  {(pl.studentName || pl.guardianType) && (
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>
+                      {[pl.guardianType, pl.studentName && `Alumno: ${pl.studentName}`].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {grouped[pos].map((pl) => (
-                  <div
-                    key={pl.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '9px 14px',
-                      borderRadius: 10,
-                      border: '1px solid #f1f5f9',
-                      background: '#fafbfc',
-                      transition: 'background .12s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f4ff')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#fafbfc')}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "'Barlow Condensed',sans-serif",
-                        fontWeight: 800,
-                        fontSize: 18,
-                        color: `${color}`,
-                        width: 26,
-                        textAlign: 'center',
-                        lineHeight: 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {pl.num}
-                    </span>
-                    <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#334155' }}>
-                      {pl.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
           {roster.length === 0 && (
             <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: '24px 0' }}>
               No hay jugadores registrados para este equipo.

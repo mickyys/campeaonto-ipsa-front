@@ -152,6 +152,16 @@ export default function MatchesTab() {
                 ))}
               </select>
             </Field>
+            <Field label="Turno">
+              <select style={inputStyle} value={editing.referee ?? ''} onChange={(e) => set({ referee: e.target.value || undefined })}>
+                <option value="">—</option>
+                {teamNames.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
 
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginTop: 12 }}>
@@ -207,61 +217,93 @@ export default function MatchesTab() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {[...matches]
-          .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
-          .map((m) => {
-            const done = m.status === 'completed'
-            return (
-              <div key={m.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 86, flexShrink: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{m.date}</div>
-                  <div style={{ fontSize: 11, color: '#94a3b8' }}>{m.time} · Cancha {m.cancha}</div>
-                </div>
-                <span
-                  style={{
-                    background: '#eef2ff',
-                    color: '#1e3a8a',
-                    borderRadius: 4,
-                    padding: '1px 6px',
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  {m.group}
-                </span>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
-                  {m.homeTeam}
-                  <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>vs</span>
-                  {m.awayTeam}
-                  {done && (
-                    <span style={{ fontSize: 12, color: '#64748b', fontWeight: 700, marginLeft: 6 }}>
-                      {m.homeScore}–{m.awayScore}
-                    </span>
-                  )}
-                </div>
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    borderRadius: 4,
-                    padding: '2px 7px',
-                    background: done ? '#dcfce7' : '#f1f5f9',
-                    color: done ? '#16a34a' : '#94a3b8',
-                  }}
-                >
-                  {done ? 'Terminado' : 'Próximo'}
-                </span>
-                <AdminButton small tone="ghost" onClick={() => startEdit(m)}>
-                  Editar
-                </AdminButton>
-                <AdminButton small tone="danger" onClick={() => handleDelete(m)}>
-                  Eliminar
-                </AdminButton>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {Object.entries(
+          matches.reduce<Record<string, Match[]>>((acc, m) => {
+            ;(acc[m.date] ??= []).push(m)
+            return acc
+          }, {}),
+        )
+          .sort(([a], [b]) => b.localeCompare(a))
+          .map(([date, dayMatches]) => (
+            <div key={date} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: '#1e3a8a',
+                  letterSpacing: '.06em',
+                  textTransform: 'uppercase',
+                  padding: '6px 2px',
+                  borderBottom: '1.5px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                📅 {date}
+                <span style={{ color: '#94a3b8', fontWeight: 600 }}>({dayMatches.length})</span>
               </div>
-            )
-          })}
+              {dayMatches
+                .slice()
+                .sort((a, b) => b.time.localeCompare(a.time))
+                .map((m) => {
+                  const done = m.status === 'completed'
+                  return (
+                    <div key={m.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 86, flexShrink: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{m.time}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                          Cancha {m.cancha}
+                          {m.referee ? ` · Turno: ${m.referee}` : ''}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          background: '#eef2ff',
+                          color: '#1e3a8a',
+                          borderRadius: 4,
+                          padding: '1px 6px',
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {m.group}
+                      </span>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
+                        {m.homeTeam}
+                        <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>vs</span>
+                        {m.awayTeam}
+                        {done && (
+                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 700, marginLeft: 6 }}>
+                            {m.homeScore}–{m.awayScore}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          borderRadius: 4,
+                          padding: '2px 7px',
+                          background: done ? '#dcfce7' : '#f1f5f9',
+                          color: done ? '#16a34a' : '#94a3b8',
+                        }}
+                      >
+                        {done ? 'Terminado' : 'Próximo'}
+                      </span>
+                      <AdminButton small tone="ghost" onClick={() => startEdit(m)}>
+                        Editar
+                      </AdminButton>
+                      <AdminButton small tone="danger" onClick={() => handleDelete(m)}>
+                        Eliminar
+                      </AdminButton>
+                    </div>
+                  )
+                })}
+            </div>
+          ))}
         {matches.length === 0 && <p style={{ fontSize: 13, color: '#94a3b8' }}>No hay partidos.</p>}
       </div>
     </div>
