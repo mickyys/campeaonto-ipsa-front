@@ -141,6 +141,12 @@ body {
   .hidden-mobile { display:none !important; }
   .show-mobile   { display:block !important; }
   .bento { gap:10px; }
+  .standings-sticky {
+    position: sticky;
+    top: 66px;
+    z-index: 40;
+    box-shadow: 0 6px 18px rgba(15,23,42,.1);
+  }
 }
 @media (min-width: 641px) {
   .hidden-mobile { display:flex !important; }

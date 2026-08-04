@@ -43,6 +43,22 @@ export function GroupBadge({ group }: { group: string }) {
   )
 }
 
+export function CupIcon({ color, size = 14 }: { color: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 576 512"
+      fill={color}
+      role="img"
+      aria-hidden="true"
+      style={{ display: 'inline-block', flexShrink: 0 }}
+    >
+      <path d="M552 64H448V24c0-13.3-10.7-24-24-24H152c-13.3 0-24 10.7-24 24v40H24C10.7 64 0 74.7 0 88v56c0 35.7 22.5 72.4 61.9 100.7 31.5 22.7 69.8 37.1 110 41.7C203.3 338.5 240 360 240 360v72h-48c-35.3 0-64 28.7-64 64h160h128c0-35.3-28.7-64-64-64h-48v-72s36.7-21.5 68.1-73.6c40.3-4.6 78.6-19 110-41.7C553.5 216.4 576 179.7 576 144V88c0-13.3-10.7-24-24-24zM64 128v35.3c0 16.7 5.6 33.3 15.8 47.1C64.4 189.5 64 158.9 64 128zm448 0c0 30.9-.4 61.5-15.8 82.3 10.2-13.8 15.8-30.4 15.8-47.1V128z" />
+    </svg>
+  )
+}
+
 export function SectionHeader({
   title,
   action,

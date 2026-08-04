@@ -4,7 +4,14 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useGroups, useStandings, useTeamColorMap, useTeams, pts, gd } from '@/lib/hooks'
 import TeamModal from '@/components/TeamModal'
-import { SectionHeader, LoadingState, ErrorState, NAVY, AMBER } from '@/components/ui'
+import { SectionHeader, LoadingState, ErrorState, NAVY, AMBER, CupIcon } from '@/components/ui'
+
+const COPA_TIERS = [
+  { id: 'oro', color: '#d97706', label: 'Copa de Oro' },
+  { id: 'plata', color: '#64748b', label: 'Copa de Plata' },
+  { id: 'bronce', color: '#b45309', label: 'Copa de Bronce' },
+]
+const copaTier = (i: number) => (i < 6 ? COPA_TIERS[Math.floor(i / 2)] : null)
 
 export default function GroupsView() {
   const teamsQ = useTeams()
@@ -66,7 +73,7 @@ export default function GroupsView() {
         ))}
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card standings-sticky" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 14 }}>
           <Image src="/ipsa-logo.png" alt="IPSA" width={36} height={36} style={{ objectFit: 'contain' }} />
           <div>
@@ -77,6 +84,16 @@ export default function GroupsView() {
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', opacity: 0.75 }}>GRUPO</div>
             <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 24, lineHeight: 1 }}>{tab}</div>
           </div>
+        </div>
+
+        <div style={{ padding: '9px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Clasifican:</span>
+          {COPA_TIERS.map((t) => (
+            <span key={t.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#475569', fontWeight: 500 }}>
+              <CupIcon color={t.color} size={11} />
+              {t.label}
+            </span>
+          ))}
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -96,75 +113,78 @@ export default function GroupsView() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((s, i) => (
-                <tr key={s.team} className={i < 2 ? 'top' : ''} style={{ background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
-                  <td style={{ paddingLeft: 20 }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        background: i === 0 ? AMBER : i < 2 ? '#dbeafe' : '#f1f5f9',
-                        color: i === 0 ? '#fff' : i < 2 ? NAVY : '#94a3b8',
-                        fontWeight: 700,
-                        fontSize: 12,
-                      }}
-                    >
-                      {i + 1}
-                    </span>
-                  </td>
-                  <td>
-                    <div
-                      onClick={() => openTeam(s.team)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}
-                      onMouseEnter={(e) => {
-                        const name = e.currentTarget.querySelector<HTMLElement>('[data-team-name]')
-                        if (name) name.style.textDecoration = 'underline'
-                      }}
-                      onMouseLeave={(e) => {
-                        const name = e.currentTarget.querySelector<HTMLElement>('[data-team-name]')
-                        if (name) name.style.textDecoration = 'none'
-                      }}
-                    >
-                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: colors.get(s.team) ?? '#94a3b8', display: 'inline-block', flexShrink: 0 }} />
+              {sorted.map((s, i) => {
+                const tier = copaTier(i)
+                return (
+                  <tr key={s.team} className={i < 2 ? 'top' : ''} style={{ background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
+                    <td style={{ paddingLeft: 20 }}>
                       <span
-                        data-team-name
                         style={{
-                          fontWeight: i < 2 ? 700 : 500,
-                          color: i < 2 ? NAVY : '#475569',
-                          fontSize: 13.5,
-                          textDecoration: 'none',
-                          transition: 'text-decoration .1s',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          background: i === 0 ? AMBER : i < 2 ? '#dbeafe' : '#f1f5f9',
+                          color: i === 0 ? '#fff' : i < 2 ? NAVY : '#94a3b8',
+                          fontWeight: 700,
+                          fontSize: 12,
                         }}
                       >
-                        {s.team}
+                        {i + 1}
                       </span>
-                      {i < 2 && (
-                        <span style={{ fontSize: 10, background: '#dbeafe', color: NAVY, borderRadius: 4, padding: '1px 6px', fontWeight: 700 }}>
-                          Clasifica
+                    </td>
+                    <td>
+                      <div
+                        onClick={() => openTeam(s.team)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}
+                        onMouseEnter={(e) => {
+                          const name = e.currentTarget.querySelector<HTMLElement>('[data-team-name]')
+                          if (name) name.style.textDecoration = 'underline'
+                        }}
+                        onMouseLeave={(e) => {
+                          const name = e.currentTarget.querySelector<HTMLElement>('[data-team-name]')
+                          if (name) name.style.textDecoration = 'none'
+                        }}
+                      >
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: colors.get(s.team) ?? '#94a3b8', display: 'inline-block', flexShrink: 0 }} />
+                        <span
+                          data-team-name
+                          style={{
+                            fontWeight: i < 2 ? 700 : 500,
+                            color: i < 2 ? NAVY : '#475569',
+                            fontSize: 13.5,
+                            textDecoration: 'none',
+                            transition: 'text-decoration .1s',
+                          }}
+                        >
+                          {s.team}
                         </span>
-                      )}
-                      <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 2 }}>👥</span>
-                    </div>
-                  </td>
-                  <td>{s.pj}</td>
-                  <td style={{ fontWeight: s.g > 0 ? 600 : 400 }}>{s.g}</td>
-                  <td>{s.e}</td>
-                  <td>{s.p}</td>
-                  <td>{s.gf}</td>
-                  <td>{s.gc}</td>
-                  <td style={{ fontWeight: 600, color: gd(s) > 0 ? '#16a34a' : gd(s) < 0 ? '#dc2626' : '#94a3b8' }}>
-                    {gd(s) > 0 ? '+' : ''}
-                    {gd(s)}
-                  </td>
-                  <td style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 17, color: i < 2 ? NAVY : '#0f172a' }}>
-                    {pts(s)}
-                  </td>
-                </tr>
-              ))}
+                        {tier && (
+                          <span title={tier.label} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <CupIcon color={tier.color} size={14} />
+                          </span>
+                        )}
+                        <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 2 }}>👥</span>
+                      </div>
+                    </td>
+                    <td>{s.pj}</td>
+                    <td style={{ fontWeight: s.g > 0 ? 600 : 400 }}>{s.g}</td>
+                    <td>{s.e}</td>
+                    <td>{s.p}</td>
+                    <td>{s.gf}</td>
+                    <td>{s.gc}</td>
+                    <td style={{ fontWeight: 600, color: gd(s) > 0 ? '#16a34a' : gd(s) < 0 ? '#dc2626' : '#94a3b8' }}>
+                      {gd(s) > 0 ? '+' : ''}
+                      {gd(s)}
+                    </td>
+                    <td style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 17, color: i < 2 ? NAVY : '#0f172a' }}>
+                      {pts(s)}
+                    </td>
+                  </tr>
+                )
+              })}
               {sorted.length === 0 && (
                 <tr>
                   <td colSpan={10} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
