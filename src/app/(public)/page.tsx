@@ -1,7 +1,7 @@
 import HomeView from '@/views/HomeView'
 
 export const metadata = {
-  title: 'Campeonato de Apoderados IPSA San Antonio 2026',
+  title: { absolute: 'Campeonato de Apoderados IPSA San Antonio 2026' },
   description:
     'Resultados, posiciones, fixture y goleadores del Campeonato de Apoderados del Instituto del Puerto San Antonio.',
 }
