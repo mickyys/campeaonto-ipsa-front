@@ -220,7 +220,7 @@ export default function ShareTab() {
   const { data: groups = [] } = useGroups()
   const { data: freeTeams = [], refetch: refetchFree } = useFreeTeams()
   const { data: settings } = useSettings()
-  const orgName = settings?.orgName ?? 'CENTRO DE PADRES IPSA SAI'
+  const orgName = settings?.orgName ?? 'CENTRO DE PADRES IPSA'
   const contactEmail = settings?.contactEmail ?? 'centrodepadresipsasai@gmail.com'
 
   const dates = [...new Set(matches.map((m) => m.date))].sort((a, b) => b.localeCompare(a))

@@ -231,7 +231,7 @@ export default function HomeView() {
       {/* About */}
       <div className="card anim-up-1" style={{ padding: '20px 24px', borderLeft: `4px solid ${AMBER}` }}>
         <p style={{ margin: 0, fontSize: 13.5, color: '#475569', lineHeight: 1.65, fontWeight: 400 }}>
-          <span style={{ fontWeight: 700, color: '#0f172a' }}>Campeonato de Apoderados IPSA SAI</span> — Una actividad
+          <span style={{ fontWeight: 700, color: '#0f172a' }}>Campeonato de Apoderados IPSA</span> — Una actividad
           recreativa organizada por el Centro de Padres, con el objetivo de fortalecer los lazos entre las familias y la
           comunidad escolar, promoviendo el compañerismo, la participación activa y el deporte. A través del juego,
           buscamos generar un ambiente de cercanía, respeto y colaboración entre los apoderados, docentes y estudiantes.
@@ -392,7 +392,7 @@ export default function HomeView() {
           </div>
 
           <div>
-            <SectionHeader title="Tabla de Goleadores" />
+            <SectionHeader title="Tabla de Goleadores" action="Ver todos" onAction={() => router.push('/goleadores')} />
             <div className="card" style={{ overflow: 'hidden' }}>
               {scorers.slice(0, 5).map((s, i) => (
                 <div

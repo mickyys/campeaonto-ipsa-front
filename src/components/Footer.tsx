@@ -67,6 +67,61 @@ export default function Footer() {
           Administrador
         </Link>
       </div>
+      <div
+        style={{
+          maxWidth: 1120,
+          margin: '14px auto 0',
+          paddingTop: 12,
+          borderTop: '1px solid #f1f5f9',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 24,
+        }}
+      >
+        <a
+          href="https://hamp.cl"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 11,
+            color: '#475569',
+            textDecoration: 'none',
+          }}
+        >
+          <Image
+            src="/logos/hamp.svg"
+            alt="hamp.cl"
+            width={18}
+            height={18}
+            style={{ objectFit: 'contain' }}
+          />
+          hamp.cl
+        </a>
+        <a
+          href="https://reservaloya.cl"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: 11,
+            color: '#475569',
+            textDecoration: 'none',
+          }}
+        >
+          <Image
+            src="/logos/reservaloya.svg"
+            alt="reservaloya.cl"
+            width={74}
+            height={18}
+            style={{ objectFit: 'contain' }}
+          />
+        </a>
+      </div>
     </footer>
   )
 }

@@ -73,7 +73,7 @@ export default function GroupsView() {
         ))}
       </div>
 
-      <div className="card standings-sticky" style={{ overflow: 'hidden' }}>
+      <div className="card" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 14 }}>
           <Image src="/ipsa-logo.png" alt="IPSA" width={36} height={36} style={{ objectFit: 'contain' }} />
           <div>
@@ -197,7 +197,7 @@ export default function GroupsView() {
         </div>
 
         <div style={{ padding: '10px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-          <span style={{ fontSize: 11, color: '#94a3b8' }}>Organiza: Centro de Padres IPSA SAI · Estadísticas Fecha 6</span>
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>Organiza: Centro de Padres IPSA · Estadísticas Fecha 6</span>
           <a href="mailto:centrodepadresipsasai@gmail.com" style={{ fontSize: 11, color: NAVY, textDecoration: 'none', fontWeight: 500 }}>
             centrodepadresipsasai@gmail.com
           </a>
