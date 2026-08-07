@@ -7,6 +7,10 @@ import type { CSSProperties, ReactNode } from 'react'
 export const NAVY = '#1e3a8a'
 export const AMBER = '#d97706'
 
+export function generateId(prefix: string) {
+  return `${prefix}-${Date.now()}`
+}
+
 export const inputStyle: CSSProperties = {
   width: '100%',
   padding: '8px 10px',

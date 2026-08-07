@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useGroups, useTeams } from '@/lib/hooks'
 import type { Group } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, generateId } from './ui'
 
-const emptyGroup = (): Group => ({ id: '', label: '', teamIds: [] })
+const emptyGroup = (): Group => ({ id: generateId('gr'), label: '', teamIds: [] })
 
 export default function GroupsTab() {
   const { data: groups = [], refetch } = useGroups()
@@ -49,9 +49,8 @@ export default function GroupsTab() {
     setError(null)
     setOk(null)
     if (!editing.label.trim()) return setError('El nombre del grupo es obligatorio')
-    if (isNew && !editing.id.trim()) return setError('El id del grupo es obligatorio')
     try {
-      await save.mutateAsync(editing)
+      await save.mutateAsync({ entity: editing, isNew })
       setOk(isNew ? 'Grupo creado' : 'Grupo actualizado')
       setEditing(null)
       refetch()
@@ -88,11 +87,9 @@ export default function GroupsTab() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 12, marginBottom: 14 }}>
             <Field label="ID">
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }}
                 value={editing.id}
-                disabled={!isNew}
-                onChange={(e) => setEditing((s) => (s ? { ...s, id: e.target.value.trim() } : s))}
-                placeholder="ej: gA"
+                readOnly
               />
             </Field>
             <Field label="Nombre (ej: A)">

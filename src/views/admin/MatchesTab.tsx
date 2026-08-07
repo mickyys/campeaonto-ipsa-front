@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { useGroups, useMatches, useTeams } from '@/lib/hooks'
 import type { Match } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, generateId } from './ui'
 
 const emptyMatch = (): Match => ({
-  id: '',
+  id: generateId('ma'),
   homeTeam: '',
   awayTeam: '',
   date: '',
@@ -59,12 +59,11 @@ export default function MatchesTab() {
     if (editing.homeTeam === editing.awayTeam) return setError('Los equipos deben ser distintos')
     if (!editing.date) return setError('La fecha es obligatoria')
     if (!editing.time) return setError('La hora es obligatoria')
-    if (isNew && !editing.id.trim()) return setError('El id es obligatorio')
     if (editing.status === 'completed' && (editing.homeScore == null || editing.awayScore == null)) {
       return setError('Ingresa los marcadores para un partido terminado')
     }
     try {
-      await save.mutateAsync(editing)
+      await save.mutateAsync({ entity: editing, isNew })
       setOk(isNew ? 'Partido creado' : 'Partido actualizado')
       setEditing(null)
       refetch()
@@ -101,11 +100,9 @@ export default function MatchesTab() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px,1fr))', gap: 12 }}>
             <Field label="ID">
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }}
                 value={editing.id}
-                disabled={!isNew}
-                onChange={(e) => set({ id: e.target.value.trim() })}
-                placeholder="ej: m14"
+                readOnly
               />
             </Field>
             <Field label="Fecha">

@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import { useTeams } from '@/lib/hooks'
 import type { Player, Team } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, NAVY } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, NAVY, generateId } from './ui'
 
 const GUARDIAN_TYPES = ['Padre', 'Padrastro', 'Otro']
 
@@ -24,7 +24,7 @@ const emptyPlayer = (): Player => ({
   studentName: '',
 })
 
-const emptyTeam = (): Team => ({ id: '', name: '', color: NAVY, players: [] })
+const emptyTeam = (): Team => ({ id: generateId('tm'), name: '', color: NAVY, players: [] })
 
 export default function TeamsTab() {
   const { data: teams = [], refetch } = useTeams()
@@ -122,11 +122,10 @@ export default function TeamsTab() {
     setError(null)
     setOk(null)
     if (!editing.name.trim()) return setError('El nombre del equipo es obligatorio')
-    if (isNew && !editing.id.trim()) return setError('El id del equipo es obligatorio')
     const invalid = editing.players.find((p) => !p.name.trim() || !p.num)
     if (invalid) return setError('Cada jugador debe tener nombre y número')
     try {
-      await save.mutateAsync(editing)
+      await save.mutateAsync({ entity: editing, isNew })
       setOk(isNew ? 'Equipo creado' : 'Equipo actualizado')
       setEditing(null)
       refetch()
@@ -163,11 +162,9 @@ export default function TeamsTab() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 12, marginBottom: 16 }}>
             <Field label="ID">
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }}
                 value={editing.id}
-                disabled={!isNew}
-                onChange={(e) => update({ id: e.target.value.trim() })}
-                placeholder="ej: kA"
+                readOnly
               />
             </Field>
             <Field label="Nombre">

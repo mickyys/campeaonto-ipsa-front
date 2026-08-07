@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { useScorers, useTeams } from '@/lib/hooks'
 import type { Scorer } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, generateId } from './ui'
 
 const emptyScorer = (): Scorer => ({
-  id: '',
+  id: generateId('sc'),
   name: '',
   team: '',
   goals: 0,
@@ -51,9 +51,8 @@ export default function ScorersTab() {
     setOk(null)
     if (!editing.name.trim()) return setError('El nombre del jugador es obligatorio')
     if (!editing.team) return setError('Selecciona el equipo')
-    if (isNew && !editing.id.trim()) return setError('El id es obligatorio')
     try {
-      await save.mutateAsync(editing)
+      await save.mutateAsync({ entity: editing, isNew })
       setOk(isNew ? 'Goleador creado' : 'Goleador actualizado')
       setEditing(null)
       refetch()
@@ -90,11 +89,9 @@ export default function ScorersTab() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px,1fr))', gap: 12 }}>
             <Field label="ID">
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }}
                 value={editing.id}
-                disabled={!isNew}
-                onChange={(e) => set({ id: e.target.value.trim() })}
-                placeholder="ej: s7"
+                readOnly
               />
             </Field>
             <Field label="Nombre">
