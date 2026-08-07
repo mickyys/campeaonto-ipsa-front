@@ -5,6 +5,7 @@ import { api } from './api'
 import type {
   CopaBrackets,
   FreeTeams,
+  GeneralStandingResponse,
   Group,
   Match,
   PublicUser,
@@ -53,6 +54,14 @@ export function useStandings() {
   return useQuery({
     queryKey: ['standings'],
     queryFn: () => api<Standings>('/api/standings'),
+    staleTime: STALE,
+  })
+}
+
+export function useGeneralStanding() {
+  return useQuery({
+    queryKey: ['standings-general'],
+    queryFn: () => api<GeneralStandingResponse>('/api/standings/general'),
     staleTime: STALE,
   })
 }

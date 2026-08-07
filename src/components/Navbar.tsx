@@ -9,6 +9,7 @@ import { useBracket, hasBracketConfigured } from '@/lib/hooks'
 const LINKS = [
   { href: '/', label: 'Inicio' },
   { href: '/grupos', label: 'Grupos' },
+  { href: '/tabla', label: 'Tabla' },
   { href: '/fixture', label: 'Fixture' },
   { href: '/equipos', label: 'Equipos' },
   { href: '/bracket', label: 'Bracket' },

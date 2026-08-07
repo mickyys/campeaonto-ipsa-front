@@ -85,6 +85,24 @@ export interface Standing {
 
 export type Standings = Record<string, Standing[]>
 
+export interface GeneralStanding extends Standing {
+  group: string
+  pos: number
+}
+
+export interface CopaClassification {
+  oro: string[]
+  plata: string[]
+  bronce: string[]
+  eliminado: string[]
+}
+
+export interface GeneralStandingResponse {
+  table: GeneralStanding[]
+  copas: CopaClassification
+  groups: Standings
+}
+
 export interface PublicUser {
   id: string
   email: string
