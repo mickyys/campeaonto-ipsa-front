@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import type { CSSProperties, ReactNode } from 'react'
 
 export const NAVY = '#1e3a8a'
@@ -154,7 +155,7 @@ export function Modal({
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
@@ -223,6 +224,7 @@ export function Modal({
         </div>
         <div style={{ overflowY: 'auto', padding: '16px 22px 22px' }}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
