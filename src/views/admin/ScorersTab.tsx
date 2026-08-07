@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useScorers, useTeams } from '@/lib/hooks'
 import type { Scorer } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, SuccessNote, inputStyle } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle } from './ui'
 
 const emptyScorer = (): Scorer => ({
   id: '',
@@ -84,11 +84,9 @@ export default function ScorersTab() {
       {error && <ErrorNote msg={error} />}
       {ok && <SuccessNote msg={ok} />}
 
-      {editing && (
-        <div className="card" style={{ padding: 18 }}>
-          <h4 style={{ margin: '0 0 14px', fontSize: 14, color: '#0f172a' }}>
-            {isNew ? 'Nuevo goleador' : `Editar: ${editing.name}`}
-          </h4>
+      <Modal open={!!editing} title={editing ? (isNew ? 'Nuevo goleador' : `Editar: ${editing.name}`) : ''} onClose={cancel}>
+        {editing && (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px,1fr))', gap: 12 }}>
             <Field label="ID">
               <input
@@ -130,8 +128,9 @@ export default function ScorersTab() {
               Cancelar
             </AdminButton>
           </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {scorers.map((s, i) => (

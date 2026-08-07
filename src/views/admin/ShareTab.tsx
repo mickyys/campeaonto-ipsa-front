@@ -37,7 +37,6 @@ function FixtureCard({
   teams,
   orgName,
   contactEmail,
-  turnoByGroup,
   freeByGroup,
   feedRef,
 }: {
@@ -46,7 +45,6 @@ function FixtureCard({
   teams: Team[]
   orgName: string
   contactEmail: string
-  turnoByGroup: Record<string, string>
   freeByGroup: Record<string, string[]>
   feedRef: React.RefObject<HTMLDivElement | null>
 }) {
@@ -122,7 +120,7 @@ function FixtureCard({
           const ac = getColor(m.awayTeam)
           const hw = m.status === 'completed' && (m.homeScore ?? 0) > (m.awayScore ?? 0)
           const aw = m.status === 'completed' && (m.awayScore ?? 0) > (m.homeScore ?? 0)
-          const turno = turnoByGroup[m.group] ?? m.referee ?? 'Por definir'
+          const turno = m.referee ?? 'Por definir'
           return (
             <div
               key={m.id}
@@ -226,7 +224,7 @@ export default function ShareTab() {
   const dayMatches = effectiveDate
     ? matches
         .filter((m) => m.date === effectiveDate)
-        .sort((a, b) => b.time.localeCompare(a.time))
+        .sort((a, b) => a.time.localeCompare(b.time))
     : []
   const dayGroups = [...new Set(dayMatches.map((m) => m.group))].sort()
   const teamNames = teams.map((t) => t.name)
@@ -332,7 +330,7 @@ export default function ShareTab() {
       dayMatches
         .map((m) =>
           `🕐 ${m.time}–${addMins(m.time, MATCH_DURATION)} | *${m.homeTeam}* vs *${m.awayTeam}*` +
-          (m.status === 'completed' ? ` — ${m.homeScore}–${m.awayScore}` : ` | Turno: ${turnoByGroup[m.group] ?? m.referee ?? 'Por definir'}`),
+          (m.status === 'completed' ? ` — ${m.homeScore}–${m.awayScore}` : ` | Turno: ${m.referee ?? 'Por definir'}`),
         )
         .join('\n') +
       `\n\n_Organiza: ${orgName}_`
@@ -481,11 +479,11 @@ export default function ShareTab() {
         {genStatus === 'done' && imgUrl ? (
           <Image src={imgUrl} alt="Fixture" width={400} height={640} unoptimized style={{ width: '100%', maxWidth: 400, height: 'auto', borderRadius: 14, display: 'block', boxShadow: '0 8px 32px rgba(0,0,0,.15)' }} />
         ) : (
-          <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} turnoByGroup={turnoByGroup} freeByGroup={freeByGroup} feedRef={cardRef} />
+          <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} freeByGroup={freeByGroup} feedRef={cardRef} />
         )}
         {genStatus === 'done' && (
           <div style={{ position: 'fixed', left: '-9999px', top: 0, pointerEvents: 'none' }}>
-            <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} turnoByGroup={turnoByGroup} freeByGroup={freeByGroup} feedRef={cardRef} />
+            <FixtureCard matches={dayMatches} date={effectiveDate} teams={teams} orgName={orgName} contactEmail={contactEmail} freeByGroup={freeByGroup} feedRef={cardRef} />
           </div>
         )}
       </div>

@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import { useTeams } from '@/lib/hooks'
 import type { Player, Team } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, SuccessNote, inputStyle, NAVY } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, NAVY } from './ui'
 
 const GUARDIAN_TYPES = ['Padre', 'Padrastro', 'Otro']
 
@@ -157,11 +157,9 @@ export default function TeamsTab() {
       {error && <ErrorNote msg={error} />}
       {ok && <SuccessNote msg={ok} />}
 
-      {editing && (
-        <div className="card" style={{ padding: 18 }}>
-          <h4 style={{ margin: '0 0 14px', fontSize: 14, color: '#0f172a' }}>
-            {isNew ? 'Nuevo equipo' : `Editar: ${editing.name}`}
-          </h4>
+      <Modal open={!!editing} title={editing ? (isNew ? 'Nuevo equipo' : `Editar: ${editing.name}`) : ''} onClose={cancel} maxWidth={720}>
+        {editing && (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 12, marginBottom: 16 }}>
             <Field label="ID">
               <input
@@ -287,8 +285,9 @@ export default function TeamsTab() {
               Cancelar
             </AdminButton>
           </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {teams.map((t) => (

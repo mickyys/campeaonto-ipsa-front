@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useGroups, useMatches, useTeams } from '@/lib/hooks'
 import type { Match } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, SuccessNote, inputStyle } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle } from './ui'
 
 const emptyMatch = (): Match => ({
   id: '',
@@ -95,11 +95,9 @@ export default function MatchesTab() {
       {error && <ErrorNote msg={error} />}
       {ok && <SuccessNote msg={ok} />}
 
-      {editing && (
-        <div className="card" style={{ padding: 18 }}>
-          <h4 style={{ margin: '0 0 14px', fontSize: 14, color: '#0f172a' }}>
-            {isNew ? 'Nuevo partido' : `Editar: ${editing.homeTeam} vs ${editing.awayTeam}`}
-          </h4>
+      <Modal open={!!editing} title={editing ? (isNew ? 'Nuevo partido' : `Editar: ${editing.homeTeam} vs ${editing.awayTeam}`) : ''} onClose={cancel} maxWidth={680}>
+        {editing && (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px,1fr))', gap: 12 }}>
             <Field label="ID">
               <input
@@ -214,8 +212,9 @@ export default function MatchesTab() {
               Cancelar
             </AdminButton>
           </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {Object.entries(

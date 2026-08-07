@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 
 export const NAVY = '#1e3a8a'
@@ -120,6 +121,108 @@ export function SuccessNote({ msg }: { msg?: string | null }) {
       }}
     >
       {msg}
+    </div>
+  )
+}
+
+export function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  maxWidth = 560,
+}: {
+  open: boolean
+  title: string
+  onClose: () => void
+  children: ReactNode
+  maxWidth?: number
+}) {
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', esc)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', esc)
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  return (
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 999,
+        background: 'rgba(15,23,42,.45)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        animation: 'fadeUp .2s ease both',
+      }}
+    >
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 18,
+          width: '100%',
+          maxWidth,
+          maxHeight: '88vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          boxShadow: '0 24px 64px rgba(15,23,42,.18)',
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <div
+          style={{
+            padding: '18px 22px 14px',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            flexShrink: 0,
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a', flex: 1 }}>
+            {title}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: '#f1f5f9',
+              border: 'none',
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              cursor: 'pointer',
+              fontSize: 14,
+              color: '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ overflowY: 'auto', padding: '16px 22px 22px' }}>{children}</div>
+      </div>
     </div>
   )
 }

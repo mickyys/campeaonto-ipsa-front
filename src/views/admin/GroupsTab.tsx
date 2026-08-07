@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useGroups, useTeams } from '@/lib/hooks'
 import type { Group } from '@/lib/types'
 import { useSave, useDelete } from './crud'
-import { AdminButton, ErrorNote, Field, SuccessNote, inputStyle } from './ui'
+import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle } from './ui'
 
 const emptyGroup = (): Group => ({ id: '', label: '', teamIds: [] })
 
@@ -82,11 +82,9 @@ export default function GroupsTab() {
       {error && <ErrorNote msg={error} />}
       {ok && <SuccessNote msg={ok} />}
 
-      {editing && (
-        <div className="card" style={{ padding: 18 }}>
-          <h4 style={{ margin: '0 0 14px', fontSize: 14, color: '#0f172a' }}>
-            {isNew ? 'Nuevo grupo' : `Editar: Grupo ${editing.label}`}
-          </h4>
+      <Modal open={!!editing} title={editing ? (isNew ? 'Nuevo grupo' : `Editar: Grupo ${editing.label}`) : ''} onClose={cancel}>
+        {editing && (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 12, marginBottom: 14 }}>
             <Field label="ID">
               <input
@@ -146,8 +144,9 @@ export default function GroupsTab() {
               Cancelar
             </AdminButton>
           </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {groups.map((g) => (
