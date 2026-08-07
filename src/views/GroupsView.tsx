@@ -6,13 +6,6 @@ import { useGroups, useStandings, useTeamColorMap, useTeams, pts, gd } from '@/l
 import TeamModal from '@/components/TeamModal'
 import { SectionHeader, LoadingState, ErrorState, NAVY, AMBER, CupIcon } from '@/components/ui'
 
-const COPA_TIERS = [
-  { id: 'oro', color: '#d97706', label: 'Copa de Oro' },
-  { id: 'plata', color: '#64748b', label: 'Copa de Plata' },
-  { id: 'bronce', color: '#b45309', label: 'Copa de Bronce' },
-]
-const copaTier = (i: number) => (i < 6 ? COPA_TIERS[Math.floor(i / 2)] : null)
-
 export default function GroupsView() {
   const teamsQ = useTeams()
   const groupsQ = useGroups()
@@ -86,16 +79,6 @@ export default function GroupsView() {
           </div>
         </div>
 
-        <div style={{ padding: '9px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Clasifican:</span>
-          {COPA_TIERS.map((t) => (
-            <span key={t.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#475569', fontWeight: 500 }}>
-              <CupIcon color={t.color} size={11} />
-              {t.label}
-            </span>
-          ))}
-        </div>
-
         <div style={{ overflowX: 'auto' }}>
           <table className="standings-table">
             <thead>
@@ -114,7 +97,6 @@ export default function GroupsView() {
             </thead>
             <tbody>
               {sorted.map((s, i) => {
-                const tier = copaTier(i)
                 return (
                   <tr key={s.team} className={i < 2 ? 'top' : ''} style={{ background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
                     <td style={{ paddingLeft: 20 }}>
@@ -161,11 +143,6 @@ export default function GroupsView() {
                         >
                           {s.team}
                         </span>
-                        {tier && (
-                          <span title={tier.label} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <CupIcon color={tier.color} size={14} />
-                          </span>
-                        )}
                         <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 2 }}>👥</span>
                       </div>
                     </td>

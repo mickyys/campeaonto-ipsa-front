@@ -211,7 +211,7 @@ export default function ShareTab() {
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
-  const { data: matches = [], refetch: refetchMatches } = useMatches()
+  const { data: matches = [] } = useMatches()
   const { data: teams = [] } = useTeams()
   const { data: groups = [] } = useGroups()
   const { data: freeTeams = [], refetch: refetchFree } = useFreeTeams()
@@ -227,13 +227,9 @@ export default function ShareTab() {
         .sort((a, b) => a.time.localeCompare(b.time))
     : []
   const dayGroups = [...new Set(dayMatches.map((m) => m.group))].sort()
-  const teamNames = teams.map((t) => t.name)
 
-  const turnoByGroup: Record<string, string> = {}
   const freeByGroup: Record<string, string[]> = {}
   for (const g of dayGroups) {
-    const first = dayMatches.find((m) => m.group === g)
-    turnoByGroup[g] = first?.referee ?? ''
     const ft = freeTeams.find((f) => f.id === effectiveDate)
     freeByGroup[g] = ft?.byGroup?.[g] ?? []
   }
@@ -252,25 +248,6 @@ export default function ShareTab() {
     setImgUrl(null)
     setError(null)
     setOk(null)
-  }
-
-  const saveTurno = async (g: string, ref: string) => {
-    setError(null)
-    setOk(null)
-    const target = dayMatches.filter((m) => m.group === g)
-    if (target.length === 0) return
-    try {
-      for (const m of target) {
-        await api(`/api/admin/matches/${encodeURIComponent(m.id)}`, {
-          method: 'PUT',
-          body: JSON.stringify({ ...m, referee: ref || undefined }),
-        })
-      }
-      refetchMatches()
-      setOk(`Equipo de turno del grupo ${g} actualizado`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar')
-    }
   }
 
   const toggleFree = async (g: string, teamId: string) => {
@@ -389,16 +366,6 @@ export default function ShareTab() {
             <div style={{ fontSize: 11, fontWeight: 700, color: '#0f172a', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 10 }}>
               Grupo {g}
             </div>
-            <Field label="Equipo de turno">
-              <select style={inputStyle} value={turnoByGroup[g] ?? ''} onChange={(e) => saveTurno(g, e.target.value)}>
-                <option value="">Por definir</option>
-                {teamNames.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </Field>
             <div style={{ marginTop: 10 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>
                 Equipos libres
