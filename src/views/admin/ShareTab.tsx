@@ -3,9 +3,8 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import html2canvas from 'html2canvas'
-import { useFreeTeams, useGroups, useMatches, useSettings, useTeams } from '@/lib/hooks'
+import { useFreeTeams, useMatches, useSettings, useTeams } from '@/lib/hooks'
 import type { Match, Team } from '@/lib/types'
-import { api } from '@/lib/api'
 import { AdminButton, ErrorNote, SuccessNote, Field, inputStyle } from './ui'
 
 const MATCH_DURATION = 50
@@ -213,8 +212,7 @@ export default function ShareTab() {
 
   const { data: matches = [] } = useMatches()
   const { data: teams = [] } = useTeams()
-  const { data: groups = [] } = useGroups()
-  const { data: freeTeams = [], refetch: refetchFree } = useFreeTeams()
+  const { data: freeTeams = [] } = useFreeTeams()
   const { data: settings } = useSettings()
   const orgName = settings?.orgName ?? 'CENTRO DE PADRES IPSA'
   const contactEmail = settings?.contactEmail ?? 'centrodepadresipsasai@gmail.com'
@@ -234,39 +232,12 @@ export default function ShareTab() {
     freeByGroup[g] = ft?.byGroup?.[g] ?? []
   }
 
-  const groupTeams = (g: string): Team[] => {
-    const grp = groups.find((x) => x.label === g)
-    if (!grp) return []
-    return grp.teamIds
-      .map((id) => teams.find((t) => t.id === id))
-      .filter((t): t is Team => Boolean(t))
-  }
-
   const selectDate = (d: string) => {
     setSelDate(d)
     setGenStatus('idle')
     setImgUrl(null)
     setError(null)
     setOk(null)
-  }
-
-  const toggleFree = async (g: string, teamId: string) => {
-    setError(null)
-    setOk(null)
-    const next = freeByGroup[g] ?? []
-    const updated = next.includes(teamId)
-      ? next.filter((id) => id !== teamId)
-      : [...next, teamId]
-    try {
-      await api(`/api/admin/free-teams/${encodeURIComponent(effectiveDate)}`, {
-        method: 'PUT',
-        body: JSON.stringify({ id: effectiveDate, byGroup: { ...freeByGroup, [g]: updated } }),
-      })
-      refetchFree()
-      setOk(`Equipos libres del grupo ${g} actualizados`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar')
-    }
   }
 
   const generate = async () => {
@@ -360,44 +331,7 @@ export default function ShareTab() {
             ))
           )}
         </div>
-
-        {dayGroups.map((g) => (
-          <div key={g} style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', padding: '12px 14px', margin: '0 0 14px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0f172a', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 10 }}>
-              Grupo {g}
-            </div>
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>
-                Equipos libres
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {groupTeams(g).map((t) => {
-                  const active = (freeByGroup[g] ?? []).includes(t.id)
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => toggleFree(g, t.id)}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: 8,
-                        border: '1.5px solid',
-                        borderColor: active ? '#1e3a8a' : '#e2e8f0',
-                        background: active ? '#eef2ff' : '#fff',
-                        color: active ? '#1e3a8a' : '#64748b',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      {t.name}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        ))}
+       
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <AdminButton onClick={generate} disabled={!dayMatches.length || genStatus === 'generating'}>
