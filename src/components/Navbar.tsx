@@ -10,6 +10,7 @@ const LINKS = [
   { href: '/', label: 'Inicio' },
   { href: '/grupos', label: 'Grupos' },
   { href: '/fixture', label: 'Fixture' },
+  { href: '/equipos', label: 'Equipos' },
   { href: '/bracket', label: 'Bracket' },
 ]
 

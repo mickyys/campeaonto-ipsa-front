@@ -214,8 +214,8 @@ export default function TeamsTab() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {editing.players.map((p, i) => (
-              <div key={p.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                <div style={{ width: 80 }}>
+              <div key={p.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div style={{ flex: '0 0 72px' }}>
                   <Field label="N°">
                     <input
                       style={inputStyle}
@@ -226,12 +226,12 @@ export default function TeamsTab() {
                     />
                   </Field>
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: '1 1 130px', minWidth: 100 }}>
                   <Field label="Nombre">
                     <input style={inputStyle} value={p.name} onChange={(e) => updatePlayer(i, { name: e.target.value })} />
                   </Field>
                 </div>
-                <div style={{ width: 170 }}>
+                <div style={{ flex: '1 1 150px' }}>
                   <Field label="Tipo de apoderado" hint="opcional">
                     <select
                       style={inputStyle}
@@ -247,7 +247,7 @@ export default function TeamsTab() {
                     </select>
                   </Field>
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: '1 1 140px', minWidth: 100 }}>
                   <Field label="Nombre del alumno" hint="opcional">
                     <input
                       style={inputStyle}
@@ -266,6 +266,7 @@ export default function TeamsTab() {
                     cursor: 'pointer',
                     padding: '6px 4px',
                     marginBottom: 2,
+                    flexShrink: 0,
                   }}
                   title="Quitar jugador"
                 >

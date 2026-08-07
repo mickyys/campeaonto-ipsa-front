@@ -98,6 +98,13 @@ body {
   animation: shimBar 2.5s linear infinite;
 }
 
+/* ── Admin responsive ──────────────────── */
+@media (max-width: 760px) {
+  .share-grid { grid-template-columns: 1fr !important; }
+  .m-main { flex: 1 1 100% !important; }
+  .m-side { flex: 1 1 100% !important; justify-content: flex-end !important; margin-left: 0 !important; }
+}
+
 /* ── Standings table ───────────────────── */
 .standings-table { width:100%; border-collapse:collapse; font-size:13.5px; }
 .standings-table th {

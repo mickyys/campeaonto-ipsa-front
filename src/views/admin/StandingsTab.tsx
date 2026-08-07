@@ -27,6 +27,7 @@ export default function StandingsTab() {
               <div style={{ padding: '10px 16px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: 13, color: NAVY }}>
                 Grupo {g.label}
               </div>
+              <div style={{ overflowX: 'auto' }}>
               <table className="standings-table" style={{ minWidth: 560 }}>
                 <thead>
                   <tr>
@@ -64,6 +65,7 @@ export default function StandingsTab() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
           )
         })}

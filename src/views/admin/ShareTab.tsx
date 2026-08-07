@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import html2canvas from 'html2canvas'
 import { useFreeTeams, useGroups, useMatches, useSettings, useTeams } from '@/lib/hooks'
@@ -212,8 +212,6 @@ export default function ShareTab() {
   const [imgUrl, setImgUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
-  const [turnoByGroup, setTurnoByGroup] = useState<Record<string, string>>({})
-  const [freeByGroup, setFreeByGroup] = useState<Record<string, string[]>>({})
 
   const { data: matches = [], refetch: refetchMatches } = useMatches()
   const { data: teams = [] } = useTeams()
@@ -233,19 +231,14 @@ export default function ShareTab() {
   const dayGroups = [...new Set(dayMatches.map((m) => m.group))].sort()
   const teamNames = teams.map((t) => t.name)
 
-  useEffect(() => {
-    const duty: Record<string, string> = {}
-    const free: Record<string, string[]> = {}
-    for (const g of dayGroups) {
-      const first = dayMatches.find((m) => m.group === g)
-      duty[g] = first?.referee ?? ''
-      const ft = freeTeams.find((f) => f.id === effectiveDate)
-      free[g] = ft?.byGroup?.[g] ?? []
-    }
-    setTurnoByGroup(duty)
-    setFreeByGroup(free)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveDate, matches, freeTeams])
+  const turnoByGroup: Record<string, string> = {}
+  const freeByGroup: Record<string, string[]> = {}
+  for (const g of dayGroups) {
+    const first = dayMatches.find((m) => m.group === g)
+    turnoByGroup[g] = first?.referee ?? ''
+    const ft = freeTeams.find((f) => f.id === effectiveDate)
+    freeByGroup[g] = ft?.byGroup?.[g] ?? []
+  }
 
   const groupTeams = (g: string): Team[] => {
     const grp = groups.find((x) => x.label === g)
@@ -275,7 +268,6 @@ export default function ShareTab() {
           body: JSON.stringify({ ...m, referee: ref || undefined }),
         })
       }
-      setTurnoByGroup((s) => ({ ...s, [g]: ref }))
       refetchMatches()
       setOk(`Equipo de turno del grupo ${g} actualizado`)
     } catch (e) {
@@ -295,7 +287,6 @@ export default function ShareTab() {
         method: 'PUT',
         body: JSON.stringify({ id: effectiveDate, byGroup: { ...freeByGroup, [g]: updated } }),
       })
-      setFreeByGroup((s) => ({ ...s, [g]: updated }))
       refetchFree()
       setOk(`Equipos libres del grupo ${g} actualizados`)
     } catch (e) {
@@ -349,7 +340,7 @@ export default function ShareTab() {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'clamp(240px,30%,320px) 1fr', gap: 28, alignItems: 'start' }}>
+    <div className="share-grid" style={{ display: 'grid', gridTemplateColumns: 'clamp(240px,30%,320px) 1fr', gap: 28, alignItems: 'start' }}>
       <div>
         <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Compartir Fixture por Fecha</h2>
 
@@ -483,7 +474,7 @@ export default function ShareTab() {
         </div>
       </div>
 
-      <div>
+      <div style={{ overflowX: 'auto' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 12 }}>
           {genStatus === 'done' ? 'Imagen generada' : 'Vista previa'}
         </div>

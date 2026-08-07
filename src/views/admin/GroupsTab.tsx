@@ -151,7 +151,7 @@ export default function GroupsTab() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {groups.map((g) => (
-          <div key={g.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={g.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span
               style={{
                 background: NAVY,
@@ -166,7 +166,7 @@ export default function GroupsTab() {
             >
               {g.label}
             </span>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: '1 1 200px', minWidth: 0 }}>
               <div style={{ fontSize: 12.5, color: '#64748b', fontWeight: 500 }}>
                 {g.teamIds.length > 0
                   ? g.teamIds

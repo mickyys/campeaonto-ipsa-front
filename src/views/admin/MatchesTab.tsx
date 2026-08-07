@@ -164,7 +164,7 @@ export default function MatchesTab() {
             </Field>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginTop: 12, flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingBottom: 8 }}>
               <input
                 type="checkbox"
@@ -251,54 +251,58 @@ export default function MatchesTab() {
                   const done = m.status === 'completed'
                   return (
                     <div key={m.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 86, flexShrink: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{m.time}</div>
-                        <div style={{ fontSize: 11, color: '#94a3b8' }}>
-                          Cancha {m.cancha}
-                          {m.referee ? ` · Turno: ${m.referee}` : ''}
+                      <div className="m-main" style={{ flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ width: 86, flexShrink: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{m.time}</div>
+                          <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                            Cancha {m.cancha}
+                            {m.referee ? ` · Turno: ${m.referee}` : ''}
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            background: '#eef2ff',
+                            color: '#1e3a8a',
+                            borderRadius: 4,
+                            padding: '1px 6px',
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {m.group}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 130, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
+                          {m.homeTeam}
+                          <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>vs</span>
+                          {m.awayTeam}
+                          {done && (
+                            <span style={{ fontSize: 12, color: '#64748b', fontWeight: 700, marginLeft: 6 }}>
+                              {m.homeScore}–{m.awayScore}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <span
-                        style={{
-                          background: '#eef2ff',
-                          color: '#1e3a8a',
-                          borderRadius: 4,
-                          padding: '1px 6px',
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {m.group}
-                      </span>
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
-                        {m.homeTeam}
-                        <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>vs</span>
-                        {m.awayTeam}
-                        {done && (
-                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 700, marginLeft: 6 }}>
-                            {m.homeScore}–{m.awayScore}
-                          </span>
-                        )}
+                      <div className="m-side" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            borderRadius: 4,
+                            padding: '2px 7px',
+                            background: done ? '#dcfce7' : '#f1f5f9',
+                            color: done ? '#16a34a' : '#94a3b8',
+                          }}
+                        >
+                          {done ? 'Terminado' : 'Próximo'}
+                        </span>
+                        <AdminButton small tone="ghost" onClick={() => startEdit(m)}>
+                          Editar
+                        </AdminButton>
+                        <AdminButton small tone="danger" onClick={() => handleDelete(m)}>
+                          Eliminar
+                        </AdminButton>
                       </div>
-                      <span
-                        style={{
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          borderRadius: 4,
-                          padding: '2px 7px',
-                          background: done ? '#dcfce7' : '#f1f5f9',
-                          color: done ? '#16a34a' : '#94a3b8',
-                        }}
-                      >
-                        {done ? 'Terminado' : 'Próximo'}
-                      </span>
-                      <AdminButton small tone="ghost" onClick={() => startEdit(m)}>
-                        Editar
-                      </AdminButton>
-                      <AdminButton small tone="danger" onClick={() => handleDelete(m)}>
-                        Eliminar
-                      </AdminButton>
                     </div>
                   )
                 })}
