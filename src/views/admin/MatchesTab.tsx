@@ -38,7 +38,7 @@ export default function MatchesTab() {
     setOk(null)
   }
   const startEdit = (m: Match) => {
-    setEditing({ ...m })
+    setEditing({ ...m, referee: m.referee ?? undefined })
     setIsNew(false)
     setError(null)
     setOk(null)
@@ -159,8 +159,8 @@ export default function MatchesTab() {
             </Field>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginTop: 12, flexWrap: 'wrap' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingBottom: 8 }}>
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={editing.status === 'completed'}
@@ -173,33 +173,29 @@ export default function MatchesTab() {
               />
               <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Partido terminado</span>
             </label>
-            {editing.status === 'completed' && (
-              <>
-                <div style={{ width: 100 }}>
-                  <Field label="Local">
-                    <input
-                      style={inputStyle}
-                      type="number"
-                      min={0}
-                      value={editing.homeScore ?? 0}
-                      onChange={(e) => set({ homeScore: Number(e.target.value) })}
-                    />
-                  </Field>
-                </div>
-                <div style={{ width: 100 }}>
-                  <Field label="Visita">
-                    <input
-                      style={inputStyle}
-                      type="number"
-                      min={0}
-                      value={editing.awayScore ?? 0}
-                      onChange={(e) => set({ awayScore: Number(e.target.value) })}
-                    />
-                  </Field>
-                </div>
-              </>
-            )}
           </div>
+          {editing.status === 'completed' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 12, marginTop: 12 }}>
+              <Field label="Local">
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min={0}
+                  value={editing.homeScore ?? 0}
+                  onChange={(e) => set({ homeScore: Number(e.target.value) })}
+                />
+              </Field>
+              <Field label="Visita">
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min={0}
+                  value={editing.awayScore ?? 0}
+                  onChange={(e) => set({ awayScore: Number(e.target.value) })}
+                />
+              </Field>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <AdminButton onClick={submit} disabled={save.isPending}>
