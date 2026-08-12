@@ -14,11 +14,13 @@ export default function BracketCard({
   colors,
   onTeamClick,
   qualifier,
+  matchLabel,
 }: {
   m: BracketMatch
   colors: Map<string, string>
   onTeamClick?: (team: string) => void
   qualifier?: BracketQualifier
+  matchLabel?: string
 }) {
   const renderRow = (
     team: string | null,
@@ -94,6 +96,23 @@ export default function BracketCard({
         boxShadow: '0 1px 4px rgba(15,23,42,.06)',
       }}
     >
+      {matchLabel && (
+        <div
+          style={{
+            padding: '3px 12px',
+            background: '#f1f5f9',
+            borderBottom: '1px solid #e2e8f0',
+            fontFamily: "'Barlow Condensed',sans-serif",
+            fontWeight: 700,
+            fontSize: 12,
+            letterSpacing: '.08em',
+            textTransform: 'uppercase',
+            color: '#64748b',
+          }}
+        >
+          {matchLabel}
+        </div>
+      )}
       {renderRow(m.home, m.home ? teamColor(colors, m.home) : '#e2e8f0', m.homeScore, false, qualifier?.home)}
       {renderRow(m.away, m.away ? teamColor(colors, m.away) : '#e2e8f0', m.awayScore, true, qualifier?.away)}
     </div>

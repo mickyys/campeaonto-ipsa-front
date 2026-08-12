@@ -49,6 +49,7 @@ export default function BracketView() {
   const meta = COPAS.find((c) => c.id === active) ?? COPAS[0]
   const bracket = useMemo(() => copas[active] ?? [], [copas, active])
   const configured = bracket.some((round) => round.matches.some((m) => m.home || m.away))
+  const slotCount = useMemo(() => Math.max(1, bracket[0]?.matches.length ?? 1), [bracket])
 
   const gridRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -216,34 +217,51 @@ export default function BracketView() {
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${bracket.length}, minmax(200px, 1fr))`,
-              gap: 18,
-              alignItems: 'start',
+              gridTemplateRows: `auto repeat(${slotCount}, minmax(auto, 1fr))`,
+              columnGap: 18,
+              rowGap: 10,
             }}
           >
             {bracket.map((round, ri) => {
               const rmeta = ROUNDS[ri] ?? { key: `R${ri + 1}`, title: `Ronda ${ri + 1}`, sub: '' }
               return (
-                <div key={`${round.name ?? rmeta.key}`} style={{ position: 'relative', zIndex: 1 }}>
-                  <div style={{ marginBottom: 12 }}>
-                    <SectionHeader title={round.name || rmeta.title} />
-                    {round.name && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8' }}>{rmeta.sub}</p>}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {round.matches.map((m: BracketMatch, mi) => (
-                      <div
-                        key={m.id}
-                        ref={(el) => {
-                          if (el) cardRefs.current.set(`${ri}-${mi}`, el)
-                          else cardRefs.current.delete(`${ri}-${mi}`)
-                        }}
-                      >
-                        <BracketCard m={m} colors={colors} onTeamClick={openTeam} qualifier={computeQualifiers(bracket, ri, mi)} />
-                      </div>
-                    ))}
-                  </div>
+                <div key={`h-${ri}`} style={{ gridRow: 1, gridColumn: ri + 1 }}>
+                  <SectionHeader title={round.name || rmeta.title} />
+                  {round.name && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8' }}>{rmeta.sub}</p>}
                 </div>
               )
             })}
+            {bracket.map((round, ri) =>
+              round.matches.map((m: BracketMatch, mi) => {
+                const span = 2 ** ri
+                const start = Math.min(mi * span, Math.max(0, slotCount - 1))
+                return (
+                  <div
+                    key={m.id}
+                    ref={(el) => {
+                      if (el) cardRefs.current.set(`${ri}-${mi}`, el)
+                      else cardRefs.current.delete(`${ri}-${mi}`)
+                    }}
+                    style={{
+                      gridRowStart: start + 2,
+                      gridRowEnd: `span ${Math.min(span, slotCount - start)}`,
+                      gridColumn: ri + 1,
+                      alignSelf: 'center',
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
+                  >
+                    <BracketCard
+                      m={m}
+                      colors={colors}
+                      onTeamClick={openTeam}
+                      qualifier={computeQualifiers(bracket, ri, mi)}
+                      matchLabel={`Partido ${mi + 1}`}
+                    />
+                  </div>
+                )
+              }),
+            )}
           </div>
         </div>
       )}
