@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useBracket, useTeams, EMPTY_COPAS } from '@/lib/hooks'
 import { api } from '@/lib/api'
-import type { Bracket, BracketCopaId, BracketMatch, BracketRound, CopaBrackets } from '@/lib/types'
+import type { Bracket, BracketCopaId, BracketMatch, CopaBrackets } from '@/lib/types'
 import { AdminButton, ErrorNote, SuccessNote, Field, inputStyle } from './ui'
 
 const ROUND_LABELS = ['Cuartos de Final', 'Semifinales', 'Final']
@@ -54,27 +54,44 @@ export default function BracketTab() {
   }
 
   const updateMatch = (ri: number, mi: number, patch: Partial<BracketMatch>) => {
-    mutateRound((rounds) =>
-      rounds.map((r, i) => {
+    mutateRound((rounds) => {
+      const next = rounds.map((r, i) => {
         if (i !== ri) return r
         return {
           ...r,
           matches: r.matches.map((m, j) => {
             if (j !== mi) return m
-            const next = { ...m, ...patch }
-            if (next.status === 'completed' && next.homeScore != null && next.awayScore != null) {
-              next.winner =
-                next.homeScore > next.awayScore
-                  ? (next.home ?? undefined)
-                  : next.awayScore > next.homeScore
-                    ? (next.away ?? undefined)
+            const updated = { ...m, ...patch }
+            if (updated.status === 'completed' && updated.homeScore != null && updated.awayScore != null) {
+              updated.winner =
+                updated.homeScore > updated.awayScore
+                  ? (updated.home ?? undefined)
+                  : updated.awayScore > updated.homeScore
+                    ? (updated.away ?? undefined)
                     : undefined
             }
-            return next
+            return updated
           }),
         }
-      }),
-    )
+      })
+
+      const completed = next[ri]?.matches?.[mi]
+      if (completed?.winner && ri + 1 < next.length) {
+        const targetMi = Math.floor(mi / 2)
+        const slot = mi % 2 === 0 ? 'home' : 'away'
+        const targetRound = next[ri + 1]
+        if (targetRound?.matches?.[targetMi]) {
+          next[ri + 1] = {
+            ...targetRound,
+            matches: targetRound.matches.map((m, j) =>
+              j === targetMi ? { ...m, [slot]: completed.winner } : m,
+            ),
+          }
+        }
+      }
+
+      return next
+    })
   }
 
   const updateRoundName = (ri: number, name: string) => {
