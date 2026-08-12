@@ -54,7 +54,7 @@ export function AdminButton({
 }: {
   children: ReactNode
   onClick?: () => void
-  tone?: 'primary' | 'ghost' | 'danger'
+  tone?: 'primary' | 'ghost' | 'danger' | 'warning'
   type?: 'button' | 'submit'
   disabled?: boolean
   small?: boolean
@@ -80,6 +80,10 @@ export function AdminButton({
     base.background = '#fff'
     base.borderColor = '#e2e8f0'
     base.color = '#475569'
+  } else if (tone === 'warning') {
+    base.background = '#fffbeb'
+    base.borderColor = '#fde68a'
+    base.color = '#b45309'
   } else {
     base.background = '#fff'
     base.borderColor = '#fecaca'

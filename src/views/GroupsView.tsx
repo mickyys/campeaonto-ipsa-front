@@ -22,7 +22,11 @@ export default function GroupsView() {
   const standings = standingsQ.data ?? {}
   const currentGroup = groups.find((g) => g.label === tab)
   const teamNames = currentGroup ? currentGroup.teamIds.map((id) => teams.find((t) => t.id === id)).filter(Boolean).map((t) => t!.name) : []
-  const sorted = [...(standings[tab] ?? [])].sort((a, b) => pts(b) - pts(a) || gd(b) - gd(a) || b.gf - a.gf)
+  const groupRows = standings[tab] ?? []
+  const activos = groupRows.filter((s) => s.active)
+  const retirados = groupRows.filter((s) => !s.active)
+  const sorted = [...activos].sort((a, b) => pts(b) - pts(a) || gd(b) - gd(a) || b.gf - a.gf)
+  const displayRows = [...sorted, ...retirados]
 
   const selected = selectedTeam ? teams.find((t) => t.name === selectedTeam) : null
   const openTeam = (team: string) => {
@@ -96,9 +100,17 @@ export default function GroupsView() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((s, i) => {
+              {displayRows.map((s, i) => {
+                const retired = s.active === false
                 return (
-                  <tr key={s.team} className={i < 2 ? 'top' : ''} style={{ background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
+                  <tr
+                    key={s.team}
+                    className={!retired && i < 2 ? 'top' : ''}
+                    style={{
+                      background: retired ? '#f8fafc' : i % 2 === 0 ? '#fff' : '#fafbfc',
+                      opacity: retired ? 0.72 : 1,
+                    }}
+                  >
                     <td style={{ paddingLeft: 20 }}>
                       <span
                         style={{
@@ -108,8 +120,8 @@ export default function GroupsView() {
                           width: 24,
                           height: 24,
                           borderRadius: '50%',
-                          background: i === 0 ? AMBER : i < 2 ? '#dbeafe' : '#f1f5f9',
-                          color: i === 0 ? '#fff' : i < 2 ? NAVY : '#94a3b8',
+                          background: retired ? '#f1f5f9' : i === 0 ? AMBER : i < 2 ? '#dbeafe' : '#f1f5f9',
+                          color: retired ? '#94a3b8' : i === 0 ? '#fff' : i < 2 ? NAVY : '#94a3b8',
                           fontWeight: 700,
                           fontSize: 12,
                         }}
@@ -134,8 +146,8 @@ export default function GroupsView() {
                         <span
                           data-team-name
                           style={{
-                            fontWeight: i < 2 ? 700 : 500,
-                            color: i < 2 ? NAVY : '#475569',
+                            fontWeight: !retired && i < 2 ? 700 : 500,
+                            color: !retired && i < 2 ? NAVY : '#475569',
                             fontSize: 13.5,
                             textDecoration: 'none',
                             transition: 'text-decoration .1s',
@@ -143,7 +155,26 @@ export default function GroupsView() {
                         >
                           {s.team}
                         </span>
-                        <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 2 }}>👥</span>
+                        {retired ? (
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 800,
+                              letterSpacing: '.05em',
+                              textTransform: 'uppercase',
+                              color: '#dc2626',
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              borderRadius: 5,
+                              padding: '1px 6px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Retirado
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: 10, color: '#cbd5e1', marginLeft: 2 }}>👥</span>
+                        )}
                       </div>
                     </td>
                     <td>{s.pj}</td>
@@ -156,13 +187,13 @@ export default function GroupsView() {
                       {gd(s) > 0 ? '+' : ''}
                       {gd(s)}
                     </td>
-                    <td style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 17, color: i < 2 ? NAVY : '#0f172a' }}>
+                    <td style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 17, color: !retired && i < 2 ? NAVY : '#0f172a' }}>
                       {pts(s)}
                     </td>
                   </tr>
                 )
               })}
-              {sorted.length === 0 && (
+              {displayRows.length === 0 && (
                 <tr>
                   <td colSpan={10} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
                     No hay partidos jugados en este grupo todavía.
@@ -187,12 +218,21 @@ export default function GroupsView() {
           {teamNames.map((team) => {
             const t = teams.find((x) => x.name === team)!
             const color = colors.get(team) ?? '#64748b'
+            const retired = t.active === false
             return (
               <div
                 key={team}
                 className="card card-hover"
                 onClick={() => openTeam(team)}
-                style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                style={{
+                  padding: '12px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  opacity: retired ? 0.65 : 1,
+                  background: retired ? '#f8fafc' : '#fff',
+                }}
               >
                 <div
                   style={{
@@ -210,7 +250,28 @@ export default function GroupsView() {
                   <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.2 }}>{team}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.2 }}>
+                    {team}
+                    {retired && (
+                      <span
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 800,
+                          letterSpacing: '.05em',
+                          textTransform: 'uppercase',
+                          color: '#dc2626',
+                          background: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          borderRadius: 5,
+                          padding: '1px 6px',
+                          marginLeft: 6,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Retirado
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{(t.players ?? []).length} jugadores</div>
                 </div>
                 <span style={{ fontSize: 11, color: '#cbd5e1' }}>›</span>

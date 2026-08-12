@@ -4,7 +4,7 @@ import { useState } from 'react'
 import * as XLSX from 'xlsx'
 import { useTeams } from '@/lib/hooks'
 import type { Player, Team } from '@/lib/types'
-import { useSave, useDelete } from './crud'
+import { useSave, useDelete, useToggleActive } from './crud'
 import { AdminButton, ErrorNote, Field, Modal, SuccessNote, inputStyle, NAVY, generateId } from './ui'
 
 const GUARDIAN_TYPES = ['Padre', 'Padrastro', 'Otro']
@@ -30,6 +30,14 @@ export default function TeamsTab() {
   const { data: teams = [], refetch } = useTeams()
   const save = useSave<Team>('/api/admin/teams', ['teams'])
   const del = useDelete('/api/admin/teams', ['teams'])
+  const toggleActive = useToggleActive('/api/admin/teams', [
+    ['teams'],
+    ['matches'],
+    ['free-teams'],
+    ['standings'],
+    ['standings-general'],
+    ['scorers'],
+  ])
   const [editing, setEditing] = useState<Team | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -143,6 +151,28 @@ export default function TeamsTab() {
       setOk('Equipo eliminado')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo eliminar')
+    }
+  }
+
+  const handleToggleActive = async (t: Team) => {
+    const retired = t.active === false
+    if (!retired) {
+      if (
+        !confirm(
+          `¿Retirar el equipo "${t.name}" del campeonato?\n\nSe cancelarán sus partidos pendientes. El equipo quedará al final de la tabla como "Retirado" y no clasificará a las copas.`,
+        )
+      )
+        return
+    } else {
+      if (!confirm(`¿Reactivar el equipo "${t.name}"? Volverá a participar de las tablas.`)) return
+    }
+    setError(null)
+    setOk(null)
+    try {
+      await toggleActive.mutateAsync({ id: t.id, active: !retired })
+      setOk(retired ? 'Equipo reactivado' : 'Equipo retirado del campeonato')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo actualizar el equipo')
     }
   }
 
@@ -287,25 +317,57 @@ export default function TeamsTab() {
       </Modal>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {teams.map((t) => (
-          <div
-            key={t.id}
-            className="card"
-            style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}
-          >
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{t.name}</div>
-              <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{t.players.length} jugadores · id: {t.id}</div>
+        {teams.map((t) => {
+          const retired = t.active === false
+          return (
+            <div
+              key={t.id}
+              className="card"
+              style={{
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                opacity: retired ? 0.72 : 1,
+                background: retired ? '#f8fafc' : '#fff',
+              }}
+            >
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {t.name}
+                  {retired && (
+                    <span
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        letterSpacing: '.05em',
+                        textTransform: 'uppercase',
+                        color: '#dc2626',
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: 5,
+                        padding: '1px 6px',
+                      }}
+                    >
+                      Retirado
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{t.players.length} jugadores · id: {t.id}</div>
+              </div>
+              <AdminButton small tone="ghost" onClick={() => startEdit(t)}>
+                Editar
+              </AdminButton>
+              <AdminButton small tone={retired ? 'primary' : 'warning'} onClick={() => handleToggleActive(t)}>
+                {retired ? 'Reactivar' : 'Retirar'}
+              </AdminButton>
+              <AdminButton small tone="danger" onClick={() => handleDelete(t)}>
+                Eliminar
+              </AdminButton>
             </div>
-            <AdminButton small tone="ghost" onClick={() => startEdit(t)}>
-              Editar
-            </AdminButton>
-            <AdminButton small tone="danger" onClick={() => handleDelete(t)}>
-              Eliminar
-            </AdminButton>
-          </div>
-        ))}
+          )
+        })}
         {teams.length === 0 && <p style={{ fontSize: 13, color: '#94a3b8' }}>No hay equipos.</p>}
       </div>
     </div>

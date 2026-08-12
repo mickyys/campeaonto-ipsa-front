@@ -10,6 +10,7 @@ export interface Team {
   id: string
   name: string
   color: string
+  active?: boolean
   players: Player[]
 }
 
@@ -64,6 +65,7 @@ export interface Scorer {
   name: string
   team: string
   goals: number
+  withdrawn?: boolean
 }
 
 export interface Settings {
@@ -75,6 +77,7 @@ export interface Settings {
 
 export interface Standing {
   team: string
+  active: boolean
   pj: number
   g: number
   e: number

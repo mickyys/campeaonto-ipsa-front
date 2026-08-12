@@ -69,8 +69,23 @@ export default function ScorersView() {
               }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: 14.5, color: i === 0 ? '#0f172a' : '#334155' }}>{s.name}</div>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>{s.team}</div>
+              <div style={{ fontWeight: 600, fontSize: 14.5, color: i === 0 ? '#0f172a' : '#334155' }}>
+                {s.name}
+                {s.withdrawn && (
+                  <span
+                    title="Equipo retirado del campeonato"
+                    style={{ color: '#f59e0b', fontWeight: 800, marginLeft: 3, cursor: 'help' }}
+                  >
+                    *
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>
+                {s.team}
+                {s.withdrawn && (
+                  <span style={{ color: '#f59e0b', marginLeft: 4, fontStyle: 'italic' }}>· retirado</span>
+                )}
+              </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 22, color: i === 0 ? NAVY : '#0f172a', lineHeight: 1 }}>

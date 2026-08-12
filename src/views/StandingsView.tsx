@@ -152,8 +152,15 @@ export default function StandingsView() {
             <tbody>
               {table.map((s, i) => {
                 const copa = badgeFor(copas, s.team)
+                const retired = s.active === false
                 return (
-                  <tr key={s.team} style={{ background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
+                  <tr
+                    key={s.team}
+                    style={{
+                      background: retired ? '#f8fafc' : i % 2 === 0 ? '#fff' : '#fafbfc',
+                      opacity: retired ? 0.72 : 1,
+                    }}
+                  >
                     <td style={{ paddingLeft: 20 }}>
                       <span
                         style={{
@@ -189,6 +196,24 @@ export default function StandingsView() {
                         <span data-team-nameg style={{ fontWeight: 600, color: '#334155', fontSize: 13.5, textDecoration: 'none', transition: 'text-decoration .1s' }}>
                           {s.team}
                         </span>
+                        {retired && (
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 800,
+                              letterSpacing: '.05em',
+                              textTransform: 'uppercase',
+                              color: '#dc2626',
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              borderRadius: 5,
+                              padding: '1px 6px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Retirado
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td>

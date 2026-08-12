@@ -21,7 +21,13 @@ export default function StandingsTab() {
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {groups.map((g) => {
-          const rows = [...(standings[g.label] ?? [])].sort((a, b) => pts(b) - pts(a) || gd(b) - gd(a) || b.gf - a.gf)
+          const groupRows = standings[g.label] ?? []
+          const activos = groupRows.filter((s) => s.active)
+          const retirados = groupRows.filter((s) => !s.active)
+          const rows = [
+            ...activos.sort((a, b) => pts(b) - pts(a) || gd(b) - gd(a) || b.gf - a.gf),
+            ...retirados,
+          ]
           return (
             <div key={g.id} className="card" style={{ overflow: 'hidden' }}>
               <div style={{ padding: '10px 16px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: 13, color: NAVY }}>
@@ -44,9 +50,29 @@ export default function StandingsTab() {
                 </thead>
                 <tbody>
                   {rows.map((s, i) => (
-                    <tr key={s.team} className={i < 2 ? 'top' : ''}>
+                    <tr key={s.team} className={!s.active && i < 2 ? '' : i < 2 ? 'top' : ''} style={{ opacity: s.active === false ? 0.65 : 1 }}>
                       <td>{i + 1}</td>
-                      <td style={{ fontWeight: i < 2 ? 700 : 500 }}>{s.team}</td>
+                      <td style={{ fontWeight: i < 2 ? 700 : 500 }}>
+                        {s.team}
+                        {s.active === false && (
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 800,
+                              letterSpacing: '.05em',
+                              textTransform: 'uppercase',
+                              color: '#dc2626',
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              borderRadius: 5,
+                              padding: '1px 6px',
+                              marginLeft: 6,
+                            }}
+                          >
+                            Retirado
+                          </span>
+                        )}
+                      </td>
                       <td>{s.pj}</td>
                       <td>{s.g}</td>
                       <td>{s.e}</td>
