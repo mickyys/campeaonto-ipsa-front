@@ -40,6 +40,7 @@ export default function StandingsView() {
 
   const table = data?.table ?? []
   const copas = data?.copas ?? ({} as CopaClassification)
+  const posByTeam = new Map(table.map((s, i) => [s.team, i + 1]))
 
   return (
     <div className="anim-up">
@@ -94,6 +95,23 @@ export default function StandingsView() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {list.map((team) => (
                   <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#334155' }}>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        background: '#f1f5f9',
+                        color: '#94a3b8',
+                      }}
+                    >
+                      {posByTeam.get(team) ?? '—'}
+                    </span>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors.get(team) ?? '#94a3b8', display: 'inline-block', flexShrink: 0 }} />
                     <span style={{ fontWeight: 600 }}>{team}</span>
                   </div>
@@ -114,6 +132,23 @@ export default function StandingsView() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {copas.eliminado.map((team) => (
               <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#94a3b8', textDecoration: 'line-through' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    background: '#e2e8f0',
+                    color: '#94a3b8',
+                  }}
+                >
+                  {posByTeam.get(team) ?? '—'}
+                </span>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors.get(team) ?? '#94a3b8', display: 'inline-block', flexShrink: 0 }} />
                 <span style={{ fontWeight: 600 }}>{team}</span>
               </div>
