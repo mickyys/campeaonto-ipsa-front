@@ -42,6 +42,7 @@ export default function TeamsTab() {
   const [isNew, setIsNew] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+  const [confirmActive, setConfirmActive] = useState<{ team: Team; retiring: boolean } | null>(null)
 
   const startNew = () => {
     setEditing(emptyTeam())
@@ -154,23 +155,22 @@ export default function TeamsTab() {
     }
   }
 
-  const handleToggleActive = async (t: Team) => {
-    const retired = t.active === false
-    if (!retired) {
-      if (
-        !confirm(
-          `¿Retirar el equipo "${t.name}" del campeonato?\n\nSe cancelarán sus partidos pendientes. El equipo quedará al final de la tabla como "Retirado" y no clasificará a las copas.`,
-        )
-      )
-        return
-    } else {
-      if (!confirm(`¿Reactivar el equipo "${t.name}"? Volverá a participar de las tablas.`)) return
-    }
+  const handleToggleActive = (t: Team) => {
+    // Abre el modal de confirmación (retirar o reactivar según el estado actual).
+    setConfirmActive({ team: t, retiring: t.active !== false })
+    setError(null)
+    setOk(null)
+  }
+
+  const confirmToggleActive = async () => {
+    if (!confirmActive) return
+    const { team: t, retiring } = confirmActive
+    setConfirmActive(null)
     setError(null)
     setOk(null)
     try {
-      await toggleActive.mutateAsync({ id: t.id, active: !retired })
-      setOk(retired ? 'Equipo reactivado' : 'Equipo retirado del campeonato')
+      await toggleActive.mutateAsync({ id: t.id, active: !retiring })
+      setOk(retiring ? 'Equipo retirado del campeonato' : 'Equipo reactivado')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo actualizar el equipo')
     }
@@ -312,6 +312,44 @@ export default function TeamsTab() {
               Cancelar
             </AdminButton>
           </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!confirmActive}
+        title={confirmActive?.retiring ? 'Retirar equipo' : 'Reactivar equipo'}
+        onClose={() => setConfirmActive(null)}
+        maxWidth={440}
+      >
+        {confirmActive && (
+          <>
+            {confirmActive.retiring ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ margin: 0, fontSize: 13.5, color: '#334155' }}>
+                  ¿Retirar al equipo <strong style={{ color: '#0f172a' }}>{confirmActive.team.name}</strong> del campeonato?
+                </p>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <li>Se cancelarán sus partidos pendientes.</li>
+                  <li>Sus resultados ya jugados se conservan.</li>
+                  <li>Quedará al final de la tabla marcado como &ldquo;Retirado&rdquo;.</li>
+                  <li>No clasificará a las copas.</li>
+                </ul>
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: 13.5, color: '#334155' }}>
+                ¿Reactivar al equipo <strong style={{ color: '#0f172a' }}>{confirmActive.team.name}</strong>? Volverá a
+                participar de las tablas y la clasificación a copas.
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+              <AdminButton onClick={confirmToggleActive} disabled={toggleActive.isPending} tone={confirmActive.retiring ? 'danger' : 'primary'}>
+                {toggleActive.isPending ? 'Procesando…' : confirmActive.retiring ? 'Sí, retirar' : 'Sí, reactivar'}
+              </AdminButton>
+              <AdminButton tone="ghost" onClick={() => setConfirmActive(null)}>
+                Cancelar
+              </AdminButton>
+            </div>
           </>
         )}
       </Modal>
