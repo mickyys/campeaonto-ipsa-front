@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useBracket, useTeams, EMPTY_COPAS } from '@/lib/hooks'
+import { useBracket, useTeams, EMPTY_COPAS, formatDate } from '@/lib/hooks'
 import { api } from '@/lib/api'
 import type { Bracket, BracketCopaId, BracketMatch, CopaBrackets } from '@/lib/types'
 import { AdminButton, ErrorNote, SuccessNote, Field, inputStyle } from './ui'
@@ -223,88 +223,157 @@ export default function BracketTab() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {round.matches.map((m, mi) => {
                 const done = m.status === 'completed'
+                const scheduled = !!(m.date && m.time)
                 return (
-                  <div key={m.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div style={{ width: 180 }}>
-                      <Field label="Local">
-                        <select
-                          style={inputStyle}
-                          value={m.home ?? ''}
-                          disabled={!draft}
-                          onChange={(e) => updateMatch(ri, mi, { home: e.target.value || null })}
-                        >
-                          <option value="">TBD</option>
-                          {teamNames.map((n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
+                  <div
+                    key={m.id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      border: draft ? '1px dashed #e2e8f0' : 'none',
+                      borderRadius: 8,
+                      padding: draft ? '10px 12px' : 0,
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                      <div style={{ width: 180 }}>
+                        <Field label="Local">
+                          <select
+                            style={inputStyle}
+                            value={m.home ?? ''}
+                            disabled={!draft}
+                            onChange={(e) => updateMatch(ri, mi, { home: e.target.value || null })}
+                          >
+                            <option value="">TBD</option>
+                            {teamNames.map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      </div>
+                      <div style={{ width: 80 }}>
+                        <Field label="Marcador">
+                          <input
+                            style={inputStyle}
+                            type="number"
+                            min={0}
+                            disabled={!draft}
+                            value={m.homeScore ?? ''}
+                            onChange={(e) => updateMatch(ri, mi, { homeScore: Number(e.target.value) })}
+                          />
+                        </Field>
+                      </div>
+                      <div style={{ width: 80 }}>
+                        <Field label="Marcador">
+                          <input
+                            style={inputStyle}
+                            type="number"
+                            min={0}
+                            disabled={!draft}
+                            value={m.awayScore ?? ''}
+                            onChange={(e) => updateMatch(ri, mi, { awayScore: Number(e.target.value) })}
+                          />
+                        </Field>
+                      </div>
+                      <div style={{ width: 180 }}>
+                        <Field label="Visita">
+                          <select
+                            style={inputStyle}
+                            value={m.away ?? ''}
+                            disabled={!draft}
+                            onChange={(e) => updateMatch(ri, mi, { away: e.target.value || null })}
+                          >
+                            <option value="">TBD</option>
+                            {teamNames.map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12.5, color: '#334155' }}>
+                          <input
+                            type="checkbox"
+                            checked={done}
+                            disabled={!draft}
+                            onChange={(e) =>
+                              updateMatch(ri, mi, {
+                                status: e.target.checked ? 'completed' : 'upcoming',
+                                ...(e.target.checked ? { homeScore: m.homeScore ?? 0, awayScore: m.awayScore ?? 0 } : {}),
+                              })
+                            }
+                          />
+                          Terminado
+                        </label>
+                        {m.winner && <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>→ {m.winner}</span>}
+                        {draft && (
+                          <AdminButton small tone="danger" onClick={() => removeMatch(ri, mi)}>
+                            ×
+                          </AdminButton>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ width: 80 }}>
-                      <Field label="Marcador">
-                        <input
-                          style={inputStyle}
-                          type="number"
-                          min={0}
-                          disabled={!draft}
-                          value={m.homeScore ?? ''}
-                          onChange={(e) => updateMatch(ri, mi, { homeScore: Number(e.target.value) })}
-                        />
-                      </Field>
-                    </div>
-                    <div style={{ width: 80 }}>
-                      <Field label="Marcador">
-                        <input
-                          style={inputStyle}
-                          type="number"
-                          min={0}
-                          disabled={!draft}
-                          value={m.awayScore ?? ''}
-                          onChange={(e) => updateMatch(ri, mi, { awayScore: Number(e.target.value) })}
-                        />
-                      </Field>
-                    </div>
-                    <div style={{ width: 180 }}>
-                      <Field label="Visita">
-                        <select
-                          style={inputStyle}
-                          value={m.away ?? ''}
-                          disabled={!draft}
-                          onChange={(e) => updateMatch(ri, mi, { away: e.target.value || null })}
-                        >
-                          <option value="">TBD</option>
-                          {teamNames.map((n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12.5, color: '#334155' }}>
-                        <input
-                          type="checkbox"
-                          checked={done}
-                          disabled={!draft}
-                          onChange={(e) =>
-                            updateMatch(ri, mi, {
-                              status: e.target.checked ? 'completed' : 'upcoming',
-                              ...(e.target.checked ? { homeScore: m.homeScore ?? 0, awayScore: m.awayScore ?? 0 } : {}),
-                            })
-                          }
-                        />
-                        Terminado
-                      </label>
-                      {m.winner && <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>→ {m.winner}</span>}
-                      {draft && (
-                        <AdminButton small tone="danger" onClick={() => removeMatch(ri, mi)}>
-                          ×
-                        </AdminButton>
-                      )}
-                    </div>
+
+                    {draft ? (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                        <div style={{ width: 150 }}>
+                          <Field label="Fecha">
+                            <input
+                              style={inputStyle}
+                              type="date"
+                              value={m.date ?? ''}
+                              onChange={(e) => updateMatch(ri, mi, { date: e.target.value || undefined })}
+                            />
+                          </Field>
+                        </div>
+                        <div style={{ width: 100 }}>
+                          <Field label="Hora">
+                            <input
+                              style={inputStyle}
+                              type="time"
+                              value={m.time ?? ''}
+                              onChange={(e) => updateMatch(ri, mi, { time: e.target.value || undefined })}
+                            />
+                          </Field>
+                        </div>
+                        <div style={{ width: 90 }}>
+                          <Field label="Cancha">
+                            <input
+                              style={inputStyle}
+                              value={m.cancha ?? '1'}
+                              onChange={(e) => updateMatch(ri, mi, { cancha: e.target.value || undefined })}
+                            />
+                          </Field>
+                        </div>
+                        <div style={{ width: 180 }}>
+                          <Field label="Turno">
+                            <select
+                              style={inputStyle}
+                              value={m.referee ?? ''}
+                              onChange={(e) => updateMatch(ri, mi, { referee: e.target.value || undefined })}
+                            >
+                              <option value="">—</option>
+                              {teamNames.map((n) => (
+                                <option key={n} value={n}>
+                                  {n}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                        </div>
+                      </div>
+                    ) : scheduled ? (
+                      <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500, paddingBottom: 2 }}>
+                        {formatDate(m.date)} · {m.time}
+                        {m.cancha ? ` · Cancha ${m.cancha}` : ''}
+                        {m.referee ? ` · Turno: ${m.referee}` : ''}
+                      </div>
+                    ) : null}
                   </div>
                 )
               })}

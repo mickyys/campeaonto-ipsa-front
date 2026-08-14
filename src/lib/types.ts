@@ -45,6 +45,10 @@ export interface BracketMatch {
   away: string | null
   homeScore?: number
   awayScore?: number
+  date?: string
+  time?: string
+  cancha?: string
+  referee?: string
   status: 'upcoming' | 'completed' | 'tbd'
   winner?: string
 }

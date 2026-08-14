@@ -1,20 +1,53 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useFreeTeams, useMatches, useTeamColorMap, useTeams, formatDateLong } from '@/lib/hooks'
+import { useFreeTeams, useMatches, useTeamColorMap, useTeams, formatDateLong, useBracket, EMPTY_COPAS } from '@/lib/hooks'
 import TeamModal from '@/components/TeamModal'
 import MatchCard from '@/components/MatchCard'
 import { SectionHeader, LoadingState, ErrorState } from '@/components/ui'
+import type { Bracket, BracketCopaId, Match } from '@/lib/types'
+
+const COPA_LABELS: Record<BracketCopaId, string> = {
+  oro: 'Oro',
+  plata: 'Plata',
+  bronce: 'Bronce',
+}
+
+const ROUND_FALLBACK = ['Cuartos', 'Semifinal', 'Final']
+
+function roundLabel(bracket: Bracket, ri: number): string {
+  const r = bracket[ri]
+  if (r?.name) return r.name
+  if (bracket.length === 2) return ri === 0 ? 'Semifinal' : 'Final'
+  return ROUND_FALLBACK[ri] ?? `Ronda ${ri + 1}`
+}
+
+function toMatch(m: NonNullable<Bracket[number]['matches'][number]>): Match {
+  return {
+    id: m.id,
+    homeTeam: m.home ?? 'Por definir',
+    awayTeam: m.away ?? 'Por definir',
+    date: m.date ?? '',
+    time: m.time ?? '',
+    group: 'E',
+    cancha: m.cancha ?? '1',
+    referee: m.referee,
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+    status: m.status === 'completed' ? 'completed' : 'upcoming',
+  }
+}
 
 export default function FixtureView() {
   const teamsQ = useTeams()
   const matchesQ = useMatches()
   const freeTeamsQ = useFreeTeams()
+  const bracketQ = useBracket()
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
 
   const colors = useTeamColorMap(teamsQ.data)
-  const loading = teamsQ.isPending || matchesQ.isPending || freeTeamsQ.isPending
-  const error = teamsQ.error ?? matchesQ.error ?? freeTeamsQ.error
+  const loading = teamsQ.isPending || matchesQ.isPending || freeTeamsQ.isPending || bracketQ.isPending
+  const error = teamsQ.error ?? matchesQ.error ?? freeTeamsQ.error ?? bracketQ.error
 
   const teams = teamsQ.data ?? []
   const matches = matchesQ.data ?? []
@@ -23,15 +56,26 @@ export default function FixtureView() {
   const nameOf = (id: string) => teams.find((t) => t.id === id)?.name ?? id
 
   const byDate = useMemo(() => {
-    const sorted = (matchesQ.data ?? []).slice().sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
-    const map = new Map<string, typeof matches>()
-    for (const m of sorted) {
-      const list = map.get(m.date) ?? []
-      list.push(m)
-      map.set(m.date, list)
+    const all: { match: Match; badge?: string }[] = []
+    for (const m of matchesQ.data ?? []) all.push({ match: m })
+    for (const [copaId, bracket] of Object.entries(bracketQ.data ?? EMPTY_COPAS)) {
+      bracket.forEach((round, ri) => {
+        const badge = `${COPA_LABELS[copaId as BracketCopaId]} · ${roundLabel(bracket, ri)}`
+        for (const m of round.matches) {
+          if (!m.date || (!m.home && !m.away)) continue
+          all.push({ match: toMatch(m), badge })
+        }
+      })
+    }
+    all.sort((a, b) => (b.match.date + b.match.time).localeCompare(a.match.date + a.match.time))
+    const map = new Map<string, { match: Match; badge?: string }[]>()
+    for (const item of all) {
+      const list = map.get(item.match.date) ?? []
+      list.push(item)
+      map.set(item.match.date, list)
     }
     return map
-  }, [matchesQ.data])
+  }, [matchesQ.data, bracketQ.data])
 
   const selected = selectedTeam ? teams.find((t) => t.name === selectedTeam) : null
   const openTeam = (team: string) => {
@@ -41,6 +85,8 @@ export default function FixtureView() {
   const retry = () => {
     teamsQ.refetch()
     matchesQ.refetch()
+    freeTeamsQ.refetch()
+    bracketQ.refetch()
   }
 
   if (loading) return <LoadingState />
@@ -57,7 +103,7 @@ export default function FixtureView() {
         <span style={{ fontSize: 12, color: '#94a3b8' }}>Haz clic en un equipo para ver su nómina.</span>
       </div>
 
-      {matches.length === 0 ? (
+      {matches.length === 0 && byDate.size === 0 ? (
         <div className="card" style={{ padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>
           El fixture se publicará pronto.
         </div>
@@ -85,11 +131,11 @@ export default function FixtureView() {
                   </div>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {list.map((m) => (
-                    <MatchCard key={m.id} m={m} colors={colors} onTeamClick={openTeam} />
+                  {list.map(({ match: m, badge }) => (
+                    <MatchCard key={m.id} m={m} colors={colors} onTeamClick={openTeam} badgeLabel={badge} />
                   ))}
                 </div>
-                {di === 0 && list.some((m) => m.status === 'upcoming') && (
+                {di === 0 && list.some(({ match: m }) => m.status === 'upcoming') && (
                   <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Última actualización: hoy · Estadísticas en vivo</p>
                 )}
               </section>

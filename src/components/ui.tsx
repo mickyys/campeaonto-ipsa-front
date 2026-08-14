@@ -25,7 +25,7 @@ export function TeamPill({ team, colors }: { team: string; colors: Map<string, s
   )
 }
 
-export function GroupBadge({ group }: { group: string }) {
+export function GroupBadge({ group, label }: { group: string; label?: string }) {
   return (
     <span
       style={{
@@ -38,7 +38,7 @@ export function GroupBadge({ group }: { group: string }) {
         letterSpacing: '.04em',
       }}
     >
-      Grupo {group}
+      {label ?? `Grupo ${group}`}
     </span>
   )
 }

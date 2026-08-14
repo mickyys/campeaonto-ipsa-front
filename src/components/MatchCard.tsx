@@ -8,10 +8,12 @@ export default function MatchCard({
   m,
   colors,
   onTeamClick,
+  badgeLabel,
 }: {
   m: Match
   colors: Map<string, string>
   onTeamClick?: (team: string) => void
+  badgeLabel?: string
 }) {
   const done = m.status === 'completed'
   const hw = done && (m.homeScore ?? 0) > (m.awayScore ?? 0)
@@ -56,7 +58,7 @@ export default function MatchCard({
             </>
           ) : null}
         </span>
-        <GroupBadge group={m.group} />
+        <GroupBadge group={m.group} label={badgeLabel} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 6 }}>
         <span
